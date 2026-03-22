@@ -2,17 +2,17 @@
 
 the experiment loop for AI agent teams.
 
+**[swarma.dev](https://swarma.dev)**
+
 ---
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 ![Python](https://img.shields.io/badge/python-3.11+-green)
 ![License](https://img.shields.io/badge/license-MIT-yellow)
 
-experiment tracking for AI agent teams. run A/B tests on your agents, track what works, evolve your playbooks automatically.
+your agents run tasks. swarma makes them run A/B tests instead.
 
-you define the hypotheses and metrics. swarma handles the loop: run experiments, score results, issue verdicts, update strategies. after enough cycles, you have a validated playbook of what actually works.
-
-not memory. not automation. not orchestration. just:
+define a hypothesis and a metric. swarma handles the loop: run experiments, score results, issue verdicts, update strategies. after enough cycles, you have a validated playbook of what actually works -- not what you assumed would work.
 
 ```
 strategy.md → execute → measure → verdict → updated strategy.md
@@ -36,15 +36,7 @@ swarma cycle starter           # run one cycle, see it work
 swarma status                  # costs, runs, experiments
 ```
 
-you need python 3.11+ and an [openrouter](https://openrouter.ai/) API key. that's it. no GPU, no postgres, no docker. runs on a laptop or a $5 VPS.
-
-connect as MCP server so your agent can run cycles and query results:
-
-```bash
-swarma serve --mcp             # stdio transport (for Hermes, Claude Code, etc.)
-```
-
-**note**: when running as MCP subprocess, pass `OPENROUTER_API_KEY` in your MCP config's `env` block -- the instance `.env` is not inherited by subprocesses.
+python 3.11+ and an [openrouter](https://openrouter.ai/) API key. no GPU, no postgres, no docker. runs on a laptop or a $5 VPS.
 
 ## how the loop works
 
@@ -56,19 +48,20 @@ swarma serve --mcp             # stdio transport (for Hermes, Claude Code, etc.)
 6. `strategy.md` updated with what was learned
 7. next cycle uses the evolved strategy
 
-**scoring**: each output gets evaluated by a separate LLM call using the cheapest model in your routing table. the evaluator sees the output, the current strategy, the last 5 scores, and the metric definition. it returns a precise score (7.3, not 7) plus a reasoning sentence and strategy suggestion. self-eval by default -- good for prototyping. wire in real signals for production.
+**scoring**: each output gets evaluated by a separate LLM call using the cheapest model in your routing table. the evaluator sees the output, the current strategy, the last 5 scores, and the metric definition. returns a precise score (7.3, not 7) plus reasoning and a strategy suggestion.
 
 **verdicts**: after enough samples, swarma compares the experiment average against baseline. >20% improvement = **keep** (pattern validated, strategy updated). >20% decline = **discard** (reverted). in between = **inconclusive** (logged, try again with more data).
 
-**strategy.md** after a few experiments:
-```markdown
-## Inconclusive (Exp 2)
-story-led hooks vs data-led hooks -- no significant difference (avg=8.1 vs baseline=7.9)
-> next: increase sample size, results may be noise
+after a few experiments, your `strategy.md` looks like this:
 
+```markdown
 ## Validated (Exp 5)
 contrarian opening + specific numbers in first line
 > 23% improvement over baseline. keep this pattern.
+
+## Inconclusive (Exp 2)
+story-led hooks vs data-led hooks -- no significant difference (avg=8.1 vs baseline=7.9)
+> next: increase sample size, results may be noise
 ```
 
 the playbook grows. the team gets smarter. you don't touch anything.
@@ -113,9 +106,35 @@ models, tools, and expert lenses are configured in `config.yaml`. agents inherit
 
 flow DSL supports sequential (`a -> b`), parallel (`a -> [b, c, d]`), and mixed pipelines.
 
-## works with hermes
+## 10 example squads
 
-swarma exposes an MCP server. connect it to [hermes agent](https://github.com/nousresearch/hermes-agent) and your hermes gets a dedicated experiment team that learns while it sleeps.
+ready-to-use squads in [`examples/`](examples/). copy one into your instance and run it:
+
+```bash
+cp -r examples/hook-lab ~/.swarma/instances/default/teams/
+swarma cycle hook-lab
+```
+
+| squad | what it tests |
+|-------|--------------|
+| `hook-lab` | opening lines -- what stops the scroll |
+| `format-wars` | carousel vs text vs thread vs image |
+| `voice-finder` | tone variations until engagement peaks |
+| `cta-optimizer` | call-to-action placement and phrasing |
+| `topic-radar` | which subjects your audience actually cares about |
+| `timing-lab` | posting time and frequency experiments |
+| `repurpose-engine` | how to recycle top performers across platforms |
+| `thread-lab` | thread structure and hook patterns |
+| `newsletter-lab` | subject lines, send times, format |
+| `defi-alpha` | research depth vs speed for crypto content |
+
+each includes a `program.md` with real experiment patterns and metric guidance.
+
+## integrations
+
+### hermes agent
+
+swarma exposes an MCP server. connect it to [hermes](https://github.com/nousresearch/hermes-agent) and your agent gets a dedicated experiment team that learns while it sleeps.
 
 ```yaml
 # hermes config.yaml
@@ -126,11 +145,10 @@ mcp_servers:
     args: ["serve", "--mcp"]
 ```
 
-hermes stays clean -- sets direction, approves plans, asks "what did we learn?" swarma does the messy work: running experiments, tracking scores, evolving strategies. no context window pollution.
+hermes stays clean -- sets direction, approves plans, asks "what did we learn?" swarma does the messy work.
 
-## works with anything
+### claude code / claude desktop
 
-**claude code / claude desktop:**
 ```json
 {
   "mcpServers": {
@@ -142,27 +160,20 @@ hermes stays clean -- sets direction, approves plans, asks "what did we learn?" 
 }
 ```
 
-**REST API:**
+### REST API
+
 ```bash
 swarma serve --port 8282        # 30+ endpoints, OpenAPI docs at /docs
 ```
 
-**any MCP client:**
+### any MCP client
+
 ```bash
 swarma serve --mcp              # stdio
 swarma serve --mcp --mcp-port 8383   # HTTP
 ```
 
-## example squads
-
-10 ready-to-use squads in [`examples/`](examples/). copy one into your instance and run it:
-
-```bash
-cp -r examples/hook-lab ~/.swarma/instances/default/teams/
-swarma cycle hook-lab
-```
-
-each squad includes a `program.md` with real experiment patterns and metric guidance.
+**note**: when running as MCP subprocess, pass `OPENROUTER_API_KEY` in your MCP config's `env` block -- the instance `.env` is not inherited by subprocesses.
 
 ## knowledge layer (QMD)
 
@@ -174,9 +185,8 @@ qmd init
 qmd serve                          # http://localhost:8181
 ```
 
-then in your instance `config.yaml`:
-
 ```yaml
+# config.yaml
 knowledge:
   engine: qmd
   qmd_endpoint: http://localhost:8181/mcp
@@ -193,13 +203,13 @@ without QMD, swarma uses local SQLite (metadata only). with QMD, full semantic s
 - **not a prompt library** -- [agency-agents](https://github.com/msitarzewski/agency-agents) has 135 templates. swarma teaches them what works.
 - **not orchestration** -- crewai/autogen run pipelines. swarma adds the feedback loop that makes pipelines improve.
 
-## coming soon
+## roadmap
 
-- expert reasoning lenses (30 composable thinking frameworks)
-- dashboard UI (experiment viewer, playbook, strategy evolution)
-- external metric ingestion (webhooks, analytics callbacks)
-- squad marketplace
-- `pip install swarma` on PyPI
+- [ ] expert reasoning lenses (composable thinking frameworks)
+- [ ] dashboard UI (experiment viewer, playbook, strategy evolution)
+- [ ] external metric ingestion (webhooks, analytics callbacks)
+- [ ] squad marketplace
+- [ ] `pip install swarma` on PyPI
 
 ## contributing
 
