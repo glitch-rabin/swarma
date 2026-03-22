@@ -101,6 +101,29 @@ experiment_config:
   auto_propose: true
 ```
 
+## example teams
+
+14 ready-to-use teams in [`examples/`](examples/), organized by function:
+
+| Category | Team | Flow | What it does |
+|----------|------|------|-------------|
+| **Content & Growth** | `content-ops` | researcher -> writer | research + LinkedIn posts |
+| | `social-growth` | researcher -> growth-lead -> [linkedin, twitter, newsletter] | multi-platform distribution |
+| | `seo-lab` | keyword-researcher -> content-writer -> seo-auditor | SEO content experiments |
+| | `thought-leadership` | research-analyst -> essay-writer -> editor | long-form authority pieces |
+| **Research & Intel** | `market-intel` | scanner -> analyst -> briefer | competitive intelligence |
+| | `trend-scout` | monitor -> analyst -> reporter | early trend detection |
+| | `crypto-research` | data-collector -> analyst -> strategist | DeFi market analysis |
+| **Conversion** | `email-ops` | researcher -> copywriter -> subject-line-tester | email campaign optimization |
+| | `landing-copy` | researcher -> copywriter -> critic | landing page A/B testing |
+| **Operations** | `quality-lab` | auditor | cross-team quality evaluation |
+| | `model-lab` | prompt-engineer -> evaluator | model comparison benchmarks |
+| | `cost-optimizer` | tester -> analyst | minimize cost at quality bar |
+| **Specialized** | `dev-rel` | docs-researcher -> tutorial-writer -> code-reviewer | developer tutorials |
+| | `product-growth` | analyst -> hypothesis-generator -> experiment-designer | growth experiment design |
+
+each team is a folder you can copy into your instance and customize. `swarma init --template content-ops` scaffolds from any example.
+
 ## the experiment loop
 
 every agent with a `metric` defined gets an automatic learning loop:
@@ -186,13 +209,25 @@ models:
 
 each agent can override the model in its config. cost is tracked per agent, per team, per day.
 
-## shared knowledge
+## shared knowledge + QMD
 
 all teams share a knowledge store. agents write artifacts (markdown files with YAML frontmatter), indexed for search.
 
-when connected to [QMD](https://github.com/tobi/qmd), you get BM25 + vector + rerank search across all artifacts. without QMD, it falls back to SQLite metadata queries.
+by default, knowledge uses SQLite metadata queries -- functional, zero setup. for production, connect [QMD](https://github.com/tobi/qmd) (by Tobi Lutke) to unlock full semantic search:
 
-team A's research feeds team B's decisions. knowledge compounds across the entire instance.
+```yaml
+# config.yaml
+knowledge:
+  qmd_endpoint: http://localhost:8181    # BM25 + vector + rerank
+  collections: [research, content, experiments, briefs]
+```
+
+with QMD connected, agents get:
+- **BM25 + vector + rerank** search across all artifacts from all teams
+- **collection-scoped queries** (e.g. only search `research` artifacts)
+- **cross-team knowledge transfer** -- team A's research automatically feeds team B's decisions
+
+knowledge compounds across the entire instance. without QMD, it still works -- just with simpler metadata matching.
 
 ## runtime adapters
 
@@ -279,7 +314,7 @@ swarma/
 
 ## roadmap
 
-- [ ] team templates (content-growth, research-intel, trading, dev-ops)
+- [x] team templates (14 examples: content, research, conversion, ops, specialized)
 - [ ] dashboard UI (experiment viewer, playbook, agent detail)
 - [ ] external metric ingestion (webhooks, analytics callbacks)
 - [ ] hermes agent integration package

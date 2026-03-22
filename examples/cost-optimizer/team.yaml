@@ -1,0 +1,6 @@
+name: Cost Optimizer
+goal: Maintain output quality while reducing model costs through prompt optimization, token reduction, and intelligent model routing.
+flow: "tester -> analyst"
+schedule: "0 12 * * 5"  # Fridays at 12:00 UTC
+budget_monthly: 5.0
+tools: []

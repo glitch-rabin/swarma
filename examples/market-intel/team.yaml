@@ -1,0 +1,6 @@
+name: Market Intelligence
+goal: Deliver a daily competitive intelligence briefing that identifies what competitors shipped, changed, or signaled -- with actionable implications.
+flow: "scanner -> analyst -> briefer"
+schedule: "0 6 * * 1-5"  # weekdays at 06:00 UTC
+budget_monthly: 18.0
+tools: []

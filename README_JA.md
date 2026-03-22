@@ -101,6 +101,29 @@ experiment_config:
   auto_propose: true
 ```
 
+## サンプルチーム
+
+14のすぐに使えるチーム設定が [`examples/`](examples/) にあります（機能別に分類）：
+
+| カテゴリ | チーム | フロー | 内容 |
+|---------|--------|--------|------|
+| **コンテンツ & グロース** | `content-ops` | researcher -> writer | リサーチ + LinkedIn投稿 |
+| | `social-growth` | researcher -> growth-lead -> [linkedin, twitter, newsletter] | マルチプラットフォーム配信 |
+| | `seo-lab` | keyword-researcher -> content-writer -> seo-auditor | SEOコンテンツ実験 |
+| | `thought-leadership` | research-analyst -> essay-writer -> editor | 長文オーソリティコンテンツ |
+| **リサーチ & インテリジェンス** | `market-intel` | scanner -> analyst -> briefer | 競合インテリジェンス |
+| | `trend-scout` | monitor -> analyst -> reporter | 新興トレンド検出 |
+| | `crypto-research` | data-collector -> analyst -> strategist | DeFi市場分析 |
+| **コンバージョン** | `email-ops` | researcher -> copywriter -> subject-line-tester | メールキャンペーン最適化 |
+| | `landing-copy` | researcher -> copywriter -> critic | ランディングページA/Bテスト |
+| **オペレーション** | `quality-lab` | auditor | クロスチーム品質評価 |
+| | `model-lab` | prompt-engineer -> evaluator | モデル比較ベンチマーク |
+| | `cost-optimizer` | tester -> analyst | 品質基準を維持しつつコスト最小化 |
+| **専門** | `dev-rel` | docs-researcher -> tutorial-writer -> code-reviewer | 開発者チュートリアル |
+| | `product-growth` | analyst -> hypothesis-generator -> experiment-designer | グロース実験設計 |
+
+各チームはフォルダ1つ。インスタンスにコピーしてカスタマイズできます。`swarma init --template content-ops` で任意のサンプルから初期化。
+
 ## 実験ループ
 
 `metric` が定義されたエージェントには自動的に学習ループが付与されます：
@@ -186,13 +209,25 @@ models:
 
 各エージェントは設定でモデルをオーバーライドできます。コストはエージェント別、チーム別、日別で追跡されます。
 
-## 共有ナレッジ
+## 共有ナレッジ + QMD
 
 全チームがナレッジストアを共有します。エージェントはYAMLフロントマター付きのMarkdownファイルとしてアーティファクトを書き出し、検索用にインデックスされます。
 
-[QMD](https://github.com/tobi/qmd) に接続すると、全アーティファクトに対して BM25 + ベクトル + リランク検索が利用できます。QMD未接続時は SQLite メタデータクエリにフォールバックします。
+デフォルトはSQLiteメタデータクエリ -- ゼロセットアップで機能します。本番環境では [QMD](https://github.com/tobi/qmd)（Tobi Lutke 開発）を接続して完全なセマンティック検索を有効化：
 
-チームAのリサーチがチームBの意思決定に反映されます。ナレッジはインスタンス全体で蓄積されていきます。
+```yaml
+# config.yaml
+knowledge:
+  qmd_endpoint: http://localhost:8181    # BM25 + ベクトル + リランク
+  collections: [research, content, experiments, briefs]
+```
+
+QMD接続時、エージェントが利用できる機能：
+- **BM25 + ベクトル + リランク** 全チームの全アーティファクトを横断検索
+- **コレクション限定クエリ**（例：`research` アーティファクトのみ検索）
+- **クロスチームナレッジ転送** -- チームAのリサーチがチームBの意思決定に自動反映
+
+ナレッジはインスタンス全体で蓄積されていきます。QMD未接続でも動作します -- よりシンプルなメタデータマッチングにフォールバック。
 
 ## ランタイムアダプター
 
@@ -279,7 +314,7 @@ swarma/
 
 ## ロードマップ
 
-- [ ] チームテンプレート（コンテンツグロース、リサーチインテリジェンス、トレーディング、DevOps）
+- [x] チームテンプレート（14サンプル：コンテンツ、リサーチ、コンバージョン、オペレーション、専門）
 - [ ] ダッシュボードUI（実験ビューワー、プレイブック、エージェント詳細）
 - [ ] 外部メトリクス取り込み（webhooks、アナリティクスコールバック）
 - [ ] Hermes Agent インテグレーションパッケージ

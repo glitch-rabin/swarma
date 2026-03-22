@@ -1,0 +1,6 @@
+name: Developer Relations
+goal: Produce accurate, useful developer tutorials and documentation that developers bookmark and share with their teams.
+flow: "docs-researcher -> tutorial-writer -> code-reviewer"
+schedule: "0 10 * * 3"  # Wednesdays at 10:00 UTC
+budget_monthly: 12.0
+tools: []

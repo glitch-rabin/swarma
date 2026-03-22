@@ -1,0 +1,6 @@
+name: SEO Lab
+goal: Rank for practitioner search queries by producing technically deep, LLMO-optimized content that search engines and AI models surface.
+flow: "keyword-researcher -> content-writer -> seo-auditor"
+schedule: "0 9 * * 1,3,5"  # Mon/Wed/Fri at 09:00 UTC
+budget_monthly: 15.0
+tools: []

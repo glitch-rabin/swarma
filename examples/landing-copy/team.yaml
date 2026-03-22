@@ -1,0 +1,6 @@
+name: Landing Copy
+goal: Increase conversion rates through systematic A/B testing of landing page copy, headlines, CTAs, and value propositions.
+flow: "researcher -> copywriter -> critic"
+schedule: null  # manual trigger per landing page
+budget_monthly: 8.0
+tools: []

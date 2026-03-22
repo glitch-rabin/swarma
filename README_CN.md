@@ -101,6 +101,29 @@ experiment_config:
   auto_propose: true
 ```
 
+## 示例团队
+
+14 个开箱即用的团队配置在 [`examples/`](examples/)，按职能分类：
+
+| 分类 | 团队 | 流程 | 功能 |
+|------|------|------|------|
+| **内容与增长** | `content-ops` | researcher -> writer | 研究 + LinkedIn 帖子 |
+| | `social-growth` | researcher -> growth-lead -> [linkedin, twitter, newsletter] | 多平台内容分发 |
+| | `seo-lab` | keyword-researcher -> content-writer -> seo-auditor | SEO 内容实验 |
+| | `thought-leadership` | research-analyst -> essay-writer -> editor | 深度权威内容 |
+| **研究与情报** | `market-intel` | scanner -> analyst -> briefer | 竞争情报 |
+| | `trend-scout` | monitor -> analyst -> reporter | 新兴趋势检测 |
+| | `crypto-research` | data-collector -> analyst -> strategist | DeFi 市场分析 |
+| **转化** | `email-ops` | researcher -> copywriter -> subject-line-tester | 邮件营销优化 |
+| | `landing-copy` | researcher -> copywriter -> critic | 落地页文案 A/B 测试 |
+| **运营** | `quality-lab` | auditor | 跨团队质量评估 |
+| | `model-lab` | prompt-engineer -> evaluator | 模型对比基准测试 |
+| | `cost-optimizer` | tester -> analyst | 在质量达标前提下最小化成本 |
+| **专项** | `dev-rel` | docs-researcher -> tutorial-writer -> code-reviewer | 开发者教程 |
+| | `product-growth` | analyst -> hypothesis-generator -> experiment-designer | 增长实验设计 |
+
+每个团队是一个文件夹，复制到你的实例中即可使用和定制。`swarma init --template content-ops` 可从任意示例初始化。
+
 ## 实验循环
 
 每个定义了 `metric` 的智能体都会自动获得学习循环：
@@ -186,13 +209,25 @@ models:
 
 每个智能体可在其配置中覆盖模型。成本按智能体、团队、天维度追踪。
 
-## 共享知识
+## 共享知识 + QMD
 
 所有团队共享知识库。智能体将产出写成带 YAML frontmatter 的 Markdown 文件，并建立索引以供搜索。
 
-连接 [QMD](https://github.com/tobi/qmd) 后，可获得跨所有产出的 BM25 + 向量 + 重排序搜索。不连接 QMD 时，回退到 SQLite 元数据查询。
+默认使用 SQLite 元数据查询 -- 开箱即用，零配置。生产环境中，连接 [QMD](https://github.com/tobi/qmd)（Tobi Lutke 开发）以解锁完整语义搜索：
 
-团队 A 的研究成果为团队 B 的决策提供信息。知识在整个实例中持续积累。
+```yaml
+# config.yaml
+knowledge:
+  qmd_endpoint: http://localhost:8181    # BM25 + 向量 + 重排序
+  collections: [research, content, experiments, briefs]
+```
+
+连接 QMD 后，智能体获得：
+- **BM25 + 向量 + 重排序** 搜索所有团队的所有产出
+- **按集合限定搜索**（例如仅搜索 `research` 产出）
+- **跨团队知识传递** -- 团队 A 的研究成果自动为团队 B 的决策提供信息
+
+知识在整个实例中持续积累。不连接 QMD 也能正常工作 -- 只是使用更简单的元数据匹配。
 
 ## 运行时适配器
 
@@ -279,7 +314,7 @@ swarma/
 
 ## 路线图
 
-- [ ] 团队模板（内容增长、研究情报、交易、开发运维）
+- [x] 团队模板（14 个示例：内容、研究、转化、运营、专项）
 - [ ] 仪表盘 UI（实验查看器、策略手册、智能体详情）
 - [ ] 外部指标接入（webhooks、分析回调）
 - [ ] Hermes Agent 集成包

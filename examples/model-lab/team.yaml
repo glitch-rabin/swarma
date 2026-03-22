@@ -1,0 +1,6 @@
+name: Model Lab
+goal: Find the optimal model for each task type at the lowest cost by running structured benchmarks across OpenRouter models.
+flow: "prompt-engineer -> evaluator"
+schedule: "0 11 * * 0"  # Sundays at 11:00 UTC
+budget_monthly: 15.0
+tools: []

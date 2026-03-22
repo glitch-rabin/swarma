@@ -1,0 +1,6 @@
+name: Crypto Research
+goal: Produce actionable DeFi market intelligence by combining on-chain data, protocol analysis, and macro context into trade-relevant insights.
+flow: "data-collector -> analyst -> strategist"
+schedule: "0 7 * * *"  # daily at 07:00 UTC
+budget_monthly: 20.0
+tools: []

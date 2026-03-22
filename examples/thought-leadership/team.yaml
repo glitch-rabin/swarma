@@ -1,0 +1,6 @@
+name: Thought Leadership
+goal: Produce original insight pieces worth citing -- long-form essays that introduce new frameworks or challenge conventional wisdom with evidence.
+flow: "research-analyst -> essay-writer -> editor"
+schedule: "0 10 * * 2"  # Tuesdays at 10:00 UTC
+budget_monthly: 20.0
+tools: []
