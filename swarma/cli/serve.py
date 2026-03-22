@@ -27,15 +27,22 @@ def serve_command(
     """Start the swarma API server and/or MCP server."""
     instance_path = get_instance_path(instance)
 
+    # In MCP stdio mode, all output must go to stderr to keep stdout clean for JSON-RPC
+    import sys
+    if mcp and http == 0:
+        log_console = Console(file=sys.stderr)
+    else:
+        log_console = console
+
     engine = None
     if instance_path.exists():
         load_env(instance_path)
         engine = build_engine(instance_path)
-        console.print(f"[bold]swarma[/bold] serve")
-        console.print(f"  instance: {instance}")
-        console.print(f"  teams: {list(engine.teams.keys())}")
+        log_console.print(f"[bold]swarma[/bold] serve")
+        log_console.print(f"  instance: {instance}")
+        log_console.print(f"  teams: {list(engine.teams.keys())}")
     else:
-        console.print(f"[yellow]Instance '{instance}' not found. Running without engine.[/yellow]")
+        log_console.print(f"[yellow]Instance '{instance}' not found. Running without engine.[/yellow]")
 
     if not mcp and port == 0:
         console.print("[red]Nothing to serve.[/red] Use --port or --mcp.")
@@ -53,6 +60,11 @@ def serve_command(
 async def _serve(engine, api_app, api_port: int, mcp_enabled: bool, mcp_http_port: int):
     """Run API and/or MCP server."""
     tasks = []
+
+    if mcp_enabled and mcp_http_port == 0:
+        # stdio MCP mode: ONLY run MCP, no API server (it would corrupt stdout)
+        await _run_mcp_stdio(engine)
+        return
 
     if api_port > 0 and api_app:
         tasks.append(_run_api(api_app, api_port))
@@ -79,9 +91,11 @@ async def _run_api(app, port: int):
 
 async def _run_mcp_stdio(engine):
     """Start MCP server on stdio."""
+    import sys
     from ..server.mcp import MCPServer
 
-    console.print("  MCP: stdio")
+    # Log to stderr only — stdout is reserved for JSON-RPC
+    Console(file=sys.stderr).print("  MCP: stdio")
     server = MCPServer(engine=engine)
     await server.run_stdio()
 
