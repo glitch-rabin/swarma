@@ -38,6 +38,14 @@ swarma status                  # costs, runs, experiments
 
 you need python 3.11+ and an [openrouter](https://openrouter.ai/) API key. that's it. no GPU, no postgres, no docker. runs on a laptop or a $5 VPS.
 
+connect as MCP server so your agent can run cycles and query results:
+
+```bash
+swarma serve --mcp             # stdio transport (for Hermes, Claude Code, etc.)
+```
+
+**note**: when running as MCP subprocess, pass `OPENROUTER_API_KEY` in your MCP config's `env` block -- the instance `.env` is not inherited by subprocesses.
+
 ## how the loop works
 
 1. agent reads its `strategy.md` before every run
