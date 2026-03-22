@@ -1,8 +1,10 @@
 # swarma
 
-the experiment loop for AI agent teams.
+the growth experiment loop for AI agents & swarms.
 
 **[swarma.dev](https://swarma.dev)**
+
+[English](README.md) | [中文](README.zh.md) | [日本語](README.ja.md)
 
 ---
 
@@ -20,17 +22,17 @@ strategy.md → execute → measure → verdict → updated strategy.md
      └──────────────────────────────────────────────┘
 ```
 
-this is the [karpathy autoresearch pattern](https://github.com/karpathy/autoresearch) applied to agent teams -- except the agents optimize real workflows, not training runs.
+applied learnings from [QMD](https://github.com/glitch-rabin/qmd) and the [karpathy autoresearch pattern](https://github.com/karpathy/autoresearch) -- the same experiment loop that growth teams run, now applied to AI agent swarms.
 
 ## why this exists
 
 every growth team at Uber, Spotify, Facebook, Airbnb runs the same loop: hypothesize, test, measure, learn, repeat. the ones that win aren't smarter -- they just run more experiments and actually listen to the data. the playbook that emerges after thousands of cycles is the real asset. not the team, not the tools, not the clever ideas. the compounded learnings.
 
-after 10 years building and scaling growth teams, the pattern is obvious: most teams ship what feels right instead of testing what works. they skip the measurement step. they don't close the loop. the strategy never evolves because nobody writes down what they learned.
+the bottleneck was always human bandwidth. even the best growth teams max out at 2-5 experiments per week. you need people to design the test, run it, wait for results, analyze, write up learnings, update the playbook. most teams skip half those steps because there aren't enough hours.
 
-AI agent teams have the same problem, except worse. agents don't remember what worked last week. they don't compare approaches. they don't build on previous wins. every run starts from zero.
+after 10 years building and scaling these teams, the pattern is obvious: the loop works. the constraint is how many times you can run it. AI agents remove that constraint entirely. a swarm can run 50 experiments while a human team runs 2. but only if something is actually closing the loop -- scoring results, issuing verdicts, evolving the strategy.
 
-swarma is the system I wished existed -- the experiment infrastructure that growth teams at scale take for granted, packaged so any agent team can use it. same loop, same rigor, same compounding. just without the 50-person team and the 6-month runway to build it internally.
+that's what swarma does. the experiment infrastructure that growth teams at scale take for granted, packaged so any agent swarm can use it. same loop, same rigor, same compounding. unlimited cycles. no 50-person team required.
 
 ## quickstart
 
