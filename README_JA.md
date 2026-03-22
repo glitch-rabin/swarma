@@ -65,71 +65,72 @@ SQLite で状態管理、Markdown ファイルでナレッジ管理。ノートP
 チームはYAML設定ファイルを含むフォルダです。コードは不要。
 
 ```
-teams/content-ops/
+teams/hook-lab/
 ├── team.yaml              # 目標、フロー、スケジュール、予算
 ├── program.md             # チームのコンテキストと制約
 └── agents/
     ├── researcher.yaml    # モデル、指標、指示
-    └── writer.yaml
+    ├── copywriter.yaml
+    └── judge.yaml
 ```
 
 **team.yaml**
 ```yaml
-name: Content Operations
-goal: produce practitioner-grade content worth saving.
-flow: "researcher -> writer"
-schedule: "0 7 * * *"     # 毎日午前7時
-budget_monthly: 50.0
+name: Hook Lab
+goal: find the message angles that make people stop scrolling.
+flow: "researcher -> copywriter -> judge"
+schedule: "0 8 * * 1-5"   # 平日午前8時
+budget_monthly: 30.0
 ```
 
 **エージェント設定**
 ```yaml
-id: writer
-name: Content Writer
+id: copywriter
+name: Hook Writer
 model:
   model_id: qwen/qwen3.5-plus-02-15
-  max_tokens: 1500
+  max_tokens: 800
   temperature: 0.7
 instructions: |
-  turn research into a linkedin post. max 200 words.
-  hook in the first line. practitioner voice. no emojis.
+  you write hooks. not posts, not articles -- just the opening
+  that makes someone stop. write 3 variations:
+  A: data-led. B: story-led. C: contrarian-led.
+  max 2 sentences per hook. include at least one specific detail.
 metric:
-  name: content_quality
-  target: 8.0
+  name: hook_score
+  target: 8.5
 experiment_config:
-  min_sample_size: 3
+  min_sample_size: 5
   auto_propose: true
 ```
 
-## サンプルチーム
+## グロススクワッド例
 
-14のすぐに使えるチーム設定が [`examples/`](examples/) にあります（機能別に分類）：
+10のグロススクワッドが [`examples/`](examples/) にあります。実際のグロースチームの組織方法に沿って、ファネル段階別に整理：
 
-| カテゴリ | チーム | フロー | 内容 |
-|---------|--------|--------|------|
-| **コンテンツ & グロース** | `content-ops` | researcher -> writer | リサーチ + LinkedIn投稿 |
-| | `social-growth` | researcher -> growth-lead -> [linkedin, twitter, newsletter] | マルチプラットフォーム配信 |
-| | `seo-lab` | keyword-researcher -> content-writer -> seo-auditor | SEOコンテンツ実験 |
-| | `thought-leadership` | research-analyst -> essay-writer -> editor | 長文オーソリティコンテンツ |
-| **リサーチ & インテリジェンス** | `market-intel` | scanner -> analyst -> briefer | 競合インテリジェンス |
-| | `trend-scout` | monitor -> analyst -> reporter | 新興トレンド検出 |
-| | `crypto-research` | data-collector -> analyst -> strategist | DeFi市場分析 |
-| **コンバージョン** | `email-ops` | researcher -> copywriter -> subject-line-tester | メールキャンペーン最適化 |
-| | `landing-copy` | researcher -> copywriter -> critic | ランディングページA/Bテスト |
-| **オペレーション** | `quality-lab` | auditor | クロスチーム品質評価 |
-| | `model-lab` | prompt-engineer -> evaluator | モデル比較ベンチマーク |
-| | `cost-optimizer` | tester -> analyst | 品質基準を維持しつつコスト最小化 |
-| **専門** | `dev-rel` | docs-researcher -> tutorial-writer -> code-reviewer | 開発者チュートリアル |
-| | `product-growth` | analyst -> hypothesis-generator -> experiment-designer | グロース実験設計 |
+| ファネル段階 | スクワッド | フロー | 最適化対象 |
+|------------|----------|--------|-----------|
+| **獲得** | `hook-lab` | researcher -> copywriter -> judge | メッセージテスト（フック、角度、CTA） |
+| | `channel-mix` | strategist -> [linkedin, twitter, email] | マルチチャネル配信テスト |
+| | `cold-outbound` | researcher -> copywriter -> personalization-engine | コールドアウトリーチ最適化 |
+| | `seo-engine` | keyword-researcher -> content-writer -> seo-auditor | プログラマティックコンテンツ + ランキング |
+| **活性化** | `activation-flow` | researcher -> sequence-designer -> evaluator | オンボーディング + 初回価値体験 |
+| **収益** | `pricing-lab` | researcher -> analyst -> page-writer | 料金プラン実験 |
+| | `landing-lab` | researcher -> copywriter -> critic | コンバージョン率最適化 |
+| **継続** | `retention-squad` | signal-monitor -> analyst -> outreach-writer | 離脱防止 + 再エンゲージメント |
+| **紹介** | `referral-engine` | analyst -> loop-designer -> outreach-writer | バイラルループ最適化 |
+| **情報** | `competitive-intel` | scanner -> analyst -> briefer | 市場モニタリング + シグナル |
 
-各チームはフォルダ1つ。インスタンスにコピーしてカスタマイズできます。`swarma init --template content-ops` で任意のサンプルから初期化。
+各スクワッドには `program.md` が含まれ、実際のグロースフレームワーク、実験パターン、指標ガイダンスを提供します。
+
+`swarma init --template hook-lab` で任意のサンプルから初期化。
 
 ## 実験ループ
 
 `metric` が定義されたエージェントには自動的に学習ループが付与されます：
 
 ```
-teams/content-ops/results/writer/
+teams/hook-lab/results/copywriter/
 ├── strategy.md              # 編集可能、時間とともに進化
 ├── results.tsv              # 追記専用のスコアログ
 └── experiments/
@@ -143,8 +144,8 @@ teams/content-ops/results/writer/
 戦略未設定。最初の実験を待機中。
 
 ## 不確定 (実験 2)
-試行：各投稿に具体的なネクストステップを追加 -- 有意な変化なし (平均=7.9 vs ベースライン=7.8)
-> 次回：業界ベンチマークとの比較で追加コンテキストを取得
+試行：ストーリー型フック vs データ型フック -- 有意な差なし (平均=8.1 vs ベースライン=7.9)
+> 次回：サンプルサイズを増やしてテスト、現在の結果はノイズの可能性
 
 ## 検証済み (実験 5)
 逆張りフック + 1行目に具体的な数字
@@ -314,7 +315,7 @@ swarma/
 
 ## ロードマップ
 
-- [x] チームテンプレート（14サンプル：コンテンツ、リサーチ、コンバージョン、オペレーション、専門）
+- [x] グロススクワッドテンプレート（10スクワッド、AARRRファネル段階別）
 - [ ] ダッシュボードUI（実験ビューワー、プレイブック、エージェント詳細）
 - [ ] 外部メトリクス取り込み（webhooks、アナリティクスコールバック）
 - [ ] Hermes Agent インテグレーションパッケージ

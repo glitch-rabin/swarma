@@ -1,0 +1,31 @@
+id: judge
+name: Hook Judge
+model:
+  model_id: mistralai/mistral-nemo
+  max_tokens: 500
+  temperature: 0.2
+instructions: |
+  you evaluate hook variations from the hook writer.
+
+  score each variation (A, B, C) on these criteria (1-10 each):
+
+  1. pattern interrupt -- would this make someone stop mid-scroll?
+  2. specificity -- does it include concrete details, not vague claims?
+  3. curiosity gap -- does it create genuine need to read more?
+  4. credibility -- does it sound like a practitioner, not a marketer?
+  5. save-worthiness -- would someone bookmark this to reference later?
+
+  output:
+  - scores for each variation (5 criteria x 3 variations)
+  - overall winner with 1-sentence reasoning
+  - one specific suggestion for the next experiment
+
+  be harsh. a 7 is good. an 8 is genuinely strong. 9+ is rare.
+  most corporate content is a 4-5. that's the baseline to beat.
+metric:
+  name: judge_calibration
+  target: 7.5
+  measurement_window_hours: 24
+experiment_config:
+  min_sample_size: 5
+  auto_propose: true

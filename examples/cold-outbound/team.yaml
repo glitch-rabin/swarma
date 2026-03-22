@@ -1,0 +1,6 @@
+name: Cold Outbound
+goal: find the outbound message that gets a reply, not a block.
+flow: "researcher -> copywriter -> personalization-engine"
+schedule: "0 7 * * 1-5"   # weekdays 7am
+budget_monthly: 25.0
+tools: []

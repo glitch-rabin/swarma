@@ -1,6 +1,0 @@
-name: Email Operations
-goal: Maximize email open rates and click-through by continuously experimenting with subject lines, copy structure, and send timing.
-flow: "researcher -> copywriter -> subject-line-tester"
-schedule: "0 14 * * 2,4"  # Tuesdays and Thursdays at 14:00 UTC
-budget_monthly: 10.0
-tools: []

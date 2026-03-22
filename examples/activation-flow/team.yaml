@@ -1,0 +1,6 @@
+name: Activation Flow
+goal: get new users to the aha moment faster. every extra step is a drop-off.
+flow: "researcher -> sequence-designer -> evaluator"
+schedule: "0 10 * * 1,4"   # mon/thu 10am
+budget_monthly: 20.0
+tools: []

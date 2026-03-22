@@ -1,0 +1,6 @@
+name: Hook Lab
+goal: find the message angles that make people stop scrolling.
+flow: "researcher -> copywriter -> judge"
+schedule: "0 8 * * 1-5"   # weekdays 8am
+budget_monthly: 30.0
+tools: []

@@ -65,71 +65,72 @@ SQLite for state, markdown files on disk for knowledge. runs on a laptop or a $5
 a team is a folder with YAML configs. no code required.
 
 ```
-teams/content-ops/
+teams/hook-lab/
 ├── team.yaml              # goal, flow, schedule, budget
 ├── program.md             # team context and constraints
 └── agents/
     ├── researcher.yaml    # model, metric, instructions
-    └── writer.yaml
+    ├── copywriter.yaml
+    └── judge.yaml
 ```
 
 **team.yaml**
 ```yaml
-name: Content Operations
-goal: produce practitioner-grade content worth saving.
-flow: "researcher -> writer"
-schedule: "0 7 * * *"     # daily at 7am
-budget_monthly: 50.0
+name: Hook Lab
+goal: find the message angles that make people stop scrolling.
+flow: "researcher -> copywriter -> judge"
+schedule: "0 8 * * 1-5"   # weekdays 8am
+budget_monthly: 30.0
 ```
 
 **agent config**
 ```yaml
-id: writer
-name: Content Writer
+id: copywriter
+name: Hook Writer
 model:
   model_id: qwen/qwen3.5-plus-02-15
-  max_tokens: 1500
+  max_tokens: 800
   temperature: 0.7
 instructions: |
-  turn research into a linkedin post. max 200 words.
-  hook in the first line. practitioner voice. no emojis.
+  you write hooks. not posts, not articles -- just the opening
+  that makes someone stop. write 3 variations:
+  A: data-led. B: story-led. C: contrarian-led.
+  max 2 sentences per hook. include at least one specific detail.
 metric:
-  name: content_quality
-  target: 8.0
+  name: hook_score
+  target: 8.5
 experiment_config:
-  min_sample_size: 3
+  min_sample_size: 5
   auto_propose: true
 ```
 
-## example teams
+## example squads
 
-14 ready-to-use teams in [`examples/`](examples/), organized by function:
+10 growth squads in [`examples/`](examples/), organized the way a real growth org structures teams -- by funnel stage, not by job title:
 
-| Category | Team | Flow | What it does |
-|----------|------|------|-------------|
-| **Content & Growth** | `content-ops` | researcher -> writer | research + LinkedIn posts |
-| | `social-growth` | researcher -> growth-lead -> [linkedin, twitter, newsletter] | multi-platform distribution |
-| | `seo-lab` | keyword-researcher -> content-writer -> seo-auditor | SEO content experiments |
-| | `thought-leadership` | research-analyst -> essay-writer -> editor | long-form authority pieces |
-| **Research & Intel** | `market-intel` | scanner -> analyst -> briefer | competitive intelligence |
-| | `trend-scout` | monitor -> analyst -> reporter | early trend detection |
-| | `crypto-research` | data-collector -> analyst -> strategist | DeFi market analysis |
-| **Conversion** | `email-ops` | researcher -> copywriter -> subject-line-tester | email campaign optimization |
-| | `landing-copy` | researcher -> copywriter -> critic | landing page A/B testing |
-| **Operations** | `quality-lab` | auditor | cross-team quality evaluation |
-| | `model-lab` | prompt-engineer -> evaluator | model comparison benchmarks |
-| | `cost-optimizer` | tester -> analyst | minimize cost at quality bar |
-| **Specialized** | `dev-rel` | docs-researcher -> tutorial-writer -> code-reviewer | developer tutorials |
-| | `product-growth` | analyst -> hypothesis-generator -> experiment-designer | growth experiment design |
+| Funnel Stage | Squad | Flow | What it optimizes |
+|-------------|-------|------|-------------------|
+| **Acquisition** | `hook-lab` | researcher -> copywriter -> judge | message testing (hooks, angles, CTAs) |
+| | `channel-mix` | strategist -> [linkedin, twitter, email] | multi-channel distribution testing |
+| | `cold-outbound` | researcher -> copywriter -> personalization-engine | outbound messaging sequences |
+| | `seo-engine` | keyword-researcher -> content-writer -> seo-auditor | programmatic content + ranking |
+| **Activation** | `activation-flow` | researcher -> sequence-designer -> evaluator | onboarding + first-value-moment |
+| **Revenue** | `pricing-lab` | researcher -> analyst -> page-writer | monetization experiments |
+| | `landing-lab` | researcher -> copywriter -> critic | conversion rate optimization |
+| **Retention** | `retention-squad` | signal-monitor -> analyst -> outreach-writer | churn prevention + re-engagement |
+| **Referral** | `referral-engine` | analyst -> loop-designer -> outreach-writer | viral loop optimization |
+| **Intelligence** | `competitive-intel` | scanner -> analyst -> briefer | market monitoring + signals |
 
-each team is a folder you can copy into your instance and customize. `swarma init --template content-ops` scaffolds from any example.
+each squad includes a `program.md` with real growth frameworks, experiment patterns, and metric guidance -- not generic "produce quality content" instructions.
+
+`swarma init --template hook-lab` scaffolds from any example.
 
 ## the experiment loop
 
 every agent with a `metric` defined gets an automatic learning loop:
 
 ```
-teams/content-ops/results/writer/
+teams/hook-lab/results/copywriter/
 ├── strategy.md              # editable, evolves over time
 ├── results.tsv              # append-only score log
 └── experiments/
@@ -143,11 +144,11 @@ teams/content-ops/results/writer/
 No strategy set yet. First experiment pending.
 
 ## Inconclusive (Exp 2)
-Tried: adding specific next steps to each post -- no significant change (avg=7.9 vs baseline=7.8)
-> Next: compare results with industry benchmarks for additional context
+Tried: story-led hooks vs data-led hooks -- no significant difference (avg=8.1 vs baseline=7.9)
+> Next: test with longer sample size, results may be noise
 
 ## Validated (Exp 5)
-contrarian hook + specific numbers in first line
+contrarian opening + specific numbers in first line
 > 23% improvement over baseline. keep this pattern.
 ```
 
@@ -314,7 +315,7 @@ swarma/
 
 ## roadmap
 
-- [x] team templates (14 examples: content, research, conversion, ops, specialized)
+- [x] growth squad templates (10 squads mapped to AARRR funnel stages)
 - [ ] dashboard UI (experiment viewer, playbook, agent detail)
 - [ ] external metric ingestion (webhooks, analytics callbacks)
 - [ ] hermes agent integration package

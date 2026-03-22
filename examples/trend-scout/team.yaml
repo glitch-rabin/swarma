@@ -1,6 +1,0 @@
-name: Trend Scout
-goal: Spot emerging trends 2-4 weeks before they hit mainstream coverage by monitoring early-signal sources and builder communities.
-flow: "monitor -> analyst -> reporter"
-schedule: "0 8 * * 1,4"  # Mondays and Thursdays at 08:00 UTC
-budget_monthly: 12.0
-tools: []

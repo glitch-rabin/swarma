@@ -1,6 +1,0 @@
-name: Product Growth
-goal: Design and validate growth experiments by combining quantitative analysis with structured hypothesis generation and experiment design.
-flow: "analyst -> hypothesis-generator -> experiment-designer"
-schedule: "0 9 * * 1"  # Mondays at 09:00 UTC
-budget_monthly: 12.0
-tools: []

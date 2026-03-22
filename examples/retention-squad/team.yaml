@@ -1,0 +1,6 @@
+name: Retention Squad
+goal: keep users before trying to get new ones. fix the bucket before pouring more water.
+flow: "signal-monitor -> analyst -> outreach-writer"
+schedule: "0 9 * * 1-5"   # weekdays 9am
+budget_monthly: 25.0
+tools: []

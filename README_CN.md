@@ -65,71 +65,72 @@ SQLite 管理状态，Markdown 文件存储知识。笔记本电脑或 $5/月的
 团队就是一个包含 YAML 配置的文件夹，不需要写代码。
 
 ```
-teams/content-ops/
+teams/hook-lab/
 ├── team.yaml              # 目标、流程、调度、预算
 ├── program.md             # 团队背景与约束
 └── agents/
     ├── researcher.yaml    # 模型、指标、指令
-    └── writer.yaml
+    ├── copywriter.yaml
+    └── judge.yaml
 ```
 
 **team.yaml**
 ```yaml
-name: Content Operations
-goal: produce practitioner-grade content worth saving.
-flow: "researcher -> writer"
-schedule: "0 7 * * *"     # 每天早上 7 点
-budget_monthly: 50.0
+name: Hook Lab
+goal: find the message angles that make people stop scrolling.
+flow: "researcher -> copywriter -> judge"
+schedule: "0 8 * * 1-5"   # 工作日早上 8 点
+budget_monthly: 30.0
 ```
 
 **智能体配置**
 ```yaml
-id: writer
-name: Content Writer
+id: copywriter
+name: Hook Writer
 model:
   model_id: qwen/qwen3.5-plus-02-15
-  max_tokens: 1500
+  max_tokens: 800
   temperature: 0.7
 instructions: |
-  turn research into a linkedin post. max 200 words.
-  hook in the first line. practitioner voice. no emojis.
+  you write hooks. not posts, not articles -- just the opening
+  that makes someone stop. write 3 variations:
+  A: data-led. B: story-led. C: contrarian-led.
+  max 2 sentences per hook. include at least one specific detail.
 metric:
-  name: content_quality
-  target: 8.0
+  name: hook_score
+  target: 8.5
 experiment_config:
-  min_sample_size: 3
+  min_sample_size: 5
   auto_propose: true
 ```
 
-## 示例团队
+## 增长小队示例
 
-14 个开箱即用的团队配置在 [`examples/`](examples/)，按职能分类：
+10 个增长小队配置在 [`examples/`](examples/)，按照真实增长团队的组织方式排列 -- 按漏斗阶段，而非职能：
 
-| 分类 | 团队 | 流程 | 功能 |
-|------|------|------|------|
-| **内容与增长** | `content-ops` | researcher -> writer | 研究 + LinkedIn 帖子 |
-| | `social-growth` | researcher -> growth-lead -> [linkedin, twitter, newsletter] | 多平台内容分发 |
-| | `seo-lab` | keyword-researcher -> content-writer -> seo-auditor | SEO 内容实验 |
-| | `thought-leadership` | research-analyst -> essay-writer -> editor | 深度权威内容 |
-| **研究与情报** | `market-intel` | scanner -> analyst -> briefer | 竞争情报 |
-| | `trend-scout` | monitor -> analyst -> reporter | 新兴趋势检测 |
-| | `crypto-research` | data-collector -> analyst -> strategist | DeFi 市场分析 |
-| **转化** | `email-ops` | researcher -> copywriter -> subject-line-tester | 邮件营销优化 |
-| | `landing-copy` | researcher -> copywriter -> critic | 落地页文案 A/B 测试 |
-| **运营** | `quality-lab` | auditor | 跨团队质量评估 |
-| | `model-lab` | prompt-engineer -> evaluator | 模型对比基准测试 |
-| | `cost-optimizer` | tester -> analyst | 在质量达标前提下最小化成本 |
-| **专项** | `dev-rel` | docs-researcher -> tutorial-writer -> code-reviewer | 开发者教程 |
-| | `product-growth` | analyst -> hypothesis-generator -> experiment-designer | 增长实验设计 |
+| 漏斗阶段 | 小队 | 流程 | 优化目标 |
+|---------|------|------|---------|
+| **获客** | `hook-lab` | researcher -> copywriter -> judge | 消息测试（钩子、角度、CTA） |
+| | `channel-mix` | strategist -> [linkedin, twitter, email] | 多渠道分发测试 |
+| | `cold-outbound` | researcher -> copywriter -> personalization-engine | 冷启动外联消息序列 |
+| | `seo-engine` | keyword-researcher -> content-writer -> seo-auditor | 程序化内容 + 排名 |
+| **激活** | `activation-flow` | researcher -> sequence-designer -> evaluator | 引导流程 + 首次价值时刻 |
+| **变现** | `pricing-lab` | researcher -> analyst -> page-writer | 定价实验 |
+| | `landing-lab` | researcher -> copywriter -> critic | 转化率优化 |
+| **留存** | `retention-squad` | signal-monitor -> analyst -> outreach-writer | 流失预防 + 召回 |
+| **推荐** | `referral-engine` | analyst -> loop-designer -> outreach-writer | 病毒循环优化 |
+| **情报** | `competitive-intel` | scanner -> analyst -> briefer | 市场监控 + 信号 |
 
-每个团队是一个文件夹，复制到你的实例中即可使用和定制。`swarma init --template content-ops` 可从任意示例初始化。
+每个小队包含 `program.md`，提供真实的增长框架、实验模式和指标指导 -- 不是泛泛的"产出高质量内容"。
+
+`swarma init --template hook-lab` 可从任意示例初始化。
 
 ## 实验循环
 
 每个定义了 `metric` 的智能体都会自动获得学习循环：
 
 ```
-teams/content-ops/results/writer/
+teams/hook-lab/results/copywriter/
 ├── strategy.md              # 可编辑，随时间进化
 ├── results.tsv              # 只追加的评分日志
 └── experiments/
@@ -143,8 +144,8 @@ teams/content-ops/results/writer/
 尚未设定策略。等待首次实验。
 
 ## 不确定 (实验 2)
-尝试：在每篇帖子中添加具体的下一步行动 -- 无显著变化 (均值=7.9 vs 基线=7.8)
-> 下一步：对比行业基准以获取更多上下文
+尝试：故事型钩子 vs 数据型钩子 -- 无显著差异 (均值=8.1 vs 基线=7.9)
+> 下一步：增大样本量测试，当前结果可能是噪声
 
 ## 已验证 (实验 5)
 反直觉开头 + 首行使用具体数字
@@ -314,7 +315,7 @@ swarma/
 
 ## 路线图
 
-- [x] 团队模板（14 个示例：内容、研究、转化、运营、专项）
+- [x] 增长小队模板（10 个小队，按 AARRR 漏斗阶段组织）
 - [ ] 仪表盘 UI（实验查看器、策略手册、智能体详情）
 - [ ] 外部指标接入（webhooks、分析回调）
 - [ ] Hermes Agent 集成包

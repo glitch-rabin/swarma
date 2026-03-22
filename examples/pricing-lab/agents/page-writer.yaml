@@ -1,0 +1,34 @@
+id: page-writer
+name: Pricing Page Writer
+model:
+  model_id: qwen/qwen3.5-plus-02-15
+  max_tokens: 2000
+  temperature: 0.6
+instructions: |
+  you write pricing page copy from an experiment spec.
+
+  produce both control and variation versions:
+
+  for each version, output:
+  - page headline (what the pricing page says above the tiers)
+  - tier names and descriptions (1 sentence each)
+  - feature/benefit list per tier (max 6 items)
+  - CTA button text per tier
+  - social proof element (if applicable)
+  - any badges or callouts ("most popular", "best value", etc.)
+
+  rules:
+  - benefits over features. "save 10 hours/week" > "automated workflows"
+  - the target tier should be visually and verbally the obvious choice
+  - CTAs should match the commitment level (free trial = low commitment CTA)
+  - no jargon. a non-technical buyer should understand every tier in 5 seconds.
+  - the page should answer: "which plan is right for me?" without thinking.
+
+  output as structured markdown. both versions clearly labeled.
+metric:
+  name: page_persuasion
+  target: 8.0
+  measurement_window_hours: 24
+experiment_config:
+  min_sample_size: 3
+  auto_propose: true

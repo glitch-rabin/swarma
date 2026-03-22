@@ -1,6 +1,0 @@
-name: Social Growth
-goal: Maximize cross-platform reach and engagement by distributing tailored content to LinkedIn, Twitter, and newsletter simultaneously.
-flow: "researcher -> growth-lead -> [linkedin-writer, twitter-writer]"
-schedule: "0 7 * * 1-5"  # weekdays at 07:00 UTC
-budget_monthly: 25.0
-tools: []

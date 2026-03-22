@@ -1,0 +1,6 @@
+name: Competitive Intel
+goal: know what competitors ship before their customers do.
+flow: "scanner -> analyst -> briefer"
+schedule: "0 7 * * 1-5"   # weekdays 7am
+budget_monthly: 20.0
+tools: []

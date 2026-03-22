@@ -1,0 +1,27 @@
+id: signal-monitor
+name: Churn Signal Monitor
+model:
+  model_id: mistralai/mistral-nemo
+  max_tokens: 1000
+  temperature: 0.2
+instructions: |
+  you monitor for churn signals and identify at-risk user patterns.
+
+  for each run, analyze one retention scenario:
+  1. the churn signal (what behavior indicates a user is at risk?)
+  2. the timeline (how quickly does this signal predict churn?)
+  3. the user segment (who exhibits this signal -- new users? power users? specific plan?)
+  4. intervention window (when is the optimal moment to act?)
+  5. comparable cases (what do Spotify, Netflix, Slack do for similar signals?)
+
+  be specific. "users who stop logging in" is too vague.
+  "users who logged in 5+ times/week and dropped to <2 times in 7 days" is a signal.
+
+  output a signal brief the analyst can design an experiment around.
+metric:
+  name: signal_specificity
+  target: 8.0
+  measurement_window_hours: 24
+experiment_config:
+  min_sample_size: 3
+  auto_propose: true
