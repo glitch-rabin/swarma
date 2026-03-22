@@ -1,0 +1,6 @@
+name: Content Operations
+goal: Produce high-quality, actionable content that practitioners find worth saving and sharing.
+flow: "researcher -> writer"
+schedule: null  # manual trigger for testing
+budget_monthly: 10.0
+tools: []

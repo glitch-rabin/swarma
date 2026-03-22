@@ -1,0 +1,6 @@
+name: Quality Lab
+goal: Evaluate and improve output quality across all teams by analyzing patterns in what works and what doesn't.
+flow: "auditor"
+schedule: null  # manual trigger for testing
+budget_monthly: 5.0
+tools: []

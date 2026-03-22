@@ -1,0 +1,24 @@
+# Minimal Template
+# Single agent, simplest possible setup. Good starting point.
+
+name: Minimal
+description: Single agent with no pipeline. Use as a starting point or for single-task automation.
+
+goal: Execute a single task reliably.
+
+flow: "worker"
+
+budget_monthly: 10.00
+
+agents:
+  worker:
+    name: Worker
+    model:
+      model_id: qwen/qwen3.5-plus-02-15
+      max_tokens: 4096
+      temperature: 0.5
+    runtime: llm
+    instructions: |
+      You are a general-purpose agent. Execute the task given to you.
+      Be thorough and specific. Output structured results.
+    metric: task_completion

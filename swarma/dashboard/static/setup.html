@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>swarma setup</title>
+  <style>
+    /* Night Market palette */
+    :root {
+      --bg: #0D0D0D;
+      --surface: #1A1717;
+      --surface-raised: #252020;
+      --border: #3A3230;
+      --border-light: #4A4240;
+      --text: #E8E0D0;
+      --text-dim: #7A6F63;
+      --gold: #D4841C;
+      --gold-light: #E8B44C;
+      --gold-dim: #A86616;
+      --red: #A83232;
+      --red-hot: #D44A3A;
+      --green: #5A8C3F;
+      --green-light: #6CB85A;
+      --turmeric: #D4A41C;
+      --shadow: rgba(60, 40, 30, 0.3);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      image-rendering: pixelated;
+      background-image:
+        linear-gradient(var(--surface) 1px, transparent 1px),
+        linear-gradient(90deg, var(--surface) 1px, transparent 1px);
+      background-size: 32px 32px;
+      background-position: -1px -1px;
+    }
+    .wizard {
+      max-width: 640px;
+      width: 100%;
+    }
+    .wizard-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .wizard-logo {
+      height: 32px;
+      image-rendering: pixelated;
+    }
+    .wizard h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .wizard h1 .dim { color: var(--text-dim); font-weight: 400; letter-spacing: 0; text-transform: none; }
+    .wizard .subtitle {
+      color: var(--text-dim);
+      margin-bottom: 32px;
+      font-size: 12px;
+    }
+
+    /* Progress -- pixel blocks */
+    .progress {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .progress-block {
+      flex: 1;
+      height: 8px;
+      background: var(--border);
+      position: relative;
+    }
+    .progress-block.done { background: var(--gold); }
+    .progress-block.current { background: var(--gold-light); }
+    .progress-label {
+      position: absolute;
+      bottom: -18px;
+      left: 0;
+      font-size: 9px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .progress-block.current .progress-label,
+    .progress-block.done .progress-label { color: var(--gold-dim); }
+
+    /* Steps (RPG menu panels) */
+    .step {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      padding: 0;
+      margin-bottom: 16px;
+      display: none;
+      position: relative;
+      box-shadow: 4px 4px 0 var(--shadow);
+    }
+    .step.active { display: block; }
+    .step::before, .step::after {
+      content: '';
+      position: absolute;
+      width: 6px; height: 6px;
+      border: 2px solid var(--gold-dim);
+    }
+    .step::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+    .step::after { top: -1px; right: -1px; border-left: none; border-bottom: none; }
+
+    .step-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-raised);
+    }
+    .step-header h2 {
+      font-size: 14px;
+      color: var(--gold-light);
+      letter-spacing: 1px;
+    }
+    .step-header .step-desc {
+      color: var(--text-dim);
+      font-size: 11px;
+      margin-top: 4px;
+    }
+    .step-body { padding: 20px; }
+
+    /* Form elements */
+    label {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+      margin-top: 16px;
+    }
+    label:first-of-type { margin-top: 0; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid var(--border);
+      background: var(--surface-raised);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      border-radius: 0;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    .hint {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+    .hint a { color: var(--gold-dim); }
+
+    /* Navigation */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 24px;
+    }
+    .btn {
+      padding: 8px 20px;
+      border: 2px solid var(--border);
+      background: var(--surface-raised);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 2px 2px 0 var(--shadow);
+      transition: none;
+      border-radius: 0;
+    }
+    .btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      box-shadow: 1px 1px 0 var(--shadow);
+      transform: translate(1px, 1px);
+    }
+    .btn:active {
+      box-shadow: none;
+      transform: translate(2px, 2px);
+    }
+    .btn-gold {
+      background: var(--gold-dim);
+      border-color: var(--gold);
+      color: var(--text);
+    }
+    .btn-gold:hover { background: var(--gold); color: #0D0D0D; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: 2px 2px 0 var(--shadow); }
+    .btn:disabled:hover { border-color: var(--border); color: var(--text); }
+
+    /* ---- Template cards ---- */
+    .template-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .template-card {
+      border: 2px solid var(--border);
+      background: var(--surface-raised);
+      padding: 14px;
+      cursor: pointer;
+      position: relative;
+    }
+    .template-card:hover { border-color: var(--gold-dim); }
+    .template-card.selected {
+      border-color: var(--gold);
+      background: rgba(212, 132, 28, 0.05);
+    }
+    .template-card.selected::after {
+      content: '';
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      background: var(--gold);
+    }
+    .template-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .template-desc {
+      font-size: 10px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .template-agents {
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--gold-dim);
+    }
+
+    /* ---- Harness cards ---- */
+    .harness-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .harness-card {
+      border: 2px solid var(--border);
+      background: var(--surface-raised);
+      padding: 14px;
+      cursor: pointer;
+      position: relative;
+    }
+    .harness-card:hover { border-color: var(--gold-dim); }
+    .harness-card.selected {
+      border-color: var(--gold);
+      background: rgba(212, 132, 28, 0.05);
+    }
+    .harness-card.selected::after {
+      content: '';
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      background: var(--gold);
+    }
+    .harness-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .harness-badge {
+      display: inline-block;
+      padding: 0px 5px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gold);
+      border: 1px solid var(--gold-dim);
+      background: rgba(212, 132, 28, 0.1);
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .harness-desc {
+      font-size: 10px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .harness-features {
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--gold-dim);
+      line-height: 1.6;
+    }
+
+    /* ---- Agent roster (step 3) ---- */
+    .roster {
+      border: 2px solid var(--border);
+      margin-top: 8px;
+    }
+    .roster-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 40px;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+    }
+    .roster-row:last-child { border-bottom: none; }
+    .roster-row.header {
+      background: var(--surface-raised);
+    }
+    .roster-cell {
+      padding: 8px 12px;
+      font-size: 12px;
+      border-right: 1px solid var(--border);
+    }
+    .roster-cell:last-child { border-right: none; }
+    .roster-cell.header-cell {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      padding: 6px 12px;
+    }
+    .roster-cell input {
+      border: none;
+      background: transparent;
+      color: var(--text);
+      padding: 0;
+      font-size: 12px;
+      width: 100%;
+    }
+    .roster-cell input:focus { outline: none; }
+    .roster-cell select {
+      border: none;
+      background: transparent;
+      color: var(--text);
+      padding: 0;
+      font-size: 11px;
+      width: 100%;
+      cursor: pointer;
+    }
+    .roster-cell select:focus { outline: none; }
+    .roster-cell select option { background: var(--surface); }
+    .btn-roster-remove {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px;
+      width: 100%;
+      text-align: center;
+    }
+    .btn-roster-remove:hover { color: var(--red-hot); }
+    .btn-small {
+      padding: 4px 10px;
+      font-size: 10px;
+    }
+
+    /* ---- Mission input ---- */
+    .mission-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid var(--border);
+      background: var(--surface-raised);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 60px;
+      border-radius: 0;
+    }
+    .mission-input:focus { outline: none; border-color: var(--gold); }
+    .mission-input::placeholder { color: var(--text-dim); }
+
+    /* ---- Flow preview ---- */
+    .flow-preview {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border: 1px dashed var(--border);
+      background: rgba(37, 32, 32, 0.3);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .flow-preview .arrow { color: var(--gold); margin: 0 6px; }
+    .flow-preview .parallel { color: var(--gold-light); }
+    .flow-preview .agent-name { color: var(--text); }
+
+    /* ---- Connect step ---- */
+    .connect-section {
+      margin-top: 16px;
+      padding: 16px;
+      border: 2px solid var(--border);
+      background: var(--surface-raised);
+    }
+    .connect-section h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gold-dim);
+      margin-bottom: 12px;
+    }
+    .connect-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .connect-row input { flex: 1; }
+    .test-result {
+      margin-top: 8px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .test-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+    }
+    .test-dot.ok { background: var(--green); }
+    .test-dot.err { background: var(--red-hot); }
+    .test-dot.pending { background: var(--turmeric); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* ---- Review summary ---- */
+    .review-grid {
+      display: grid;
+      gap: 0;
+      border: 2px solid var(--border);
+    }
+    .review-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 24px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+    }
+    .review-row:last-child { border-bottom: none; }
+    .review-label {
+      padding: 10px 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      background: var(--surface-raised);
+      border-right: 1px solid var(--border);
+    }
+    .review-value {
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+    .review-check {
+      text-align: center;
+      font-size: 12px;
+    }
+    .check-ok { color: var(--green); }
+    .check-pending { color: var(--text-dim); }
+
+    /* Config output */
+    pre {
+      background: var(--surface-raised);
+      border: 2px solid var(--border);
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 11px;
+      line-height: 1.6;
+      color: var(--gold-light);
+      margin-top: 8px;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 520px) {
+      .template-grid, .harness-grid { grid-template-columns: 1fr; }
+      .roster-row { grid-template-columns: 1fr 1fr 32px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wizard">
+    <div class="wizard-header">
+      <img src="/static/icon.png" class="wizard-logo" alt="">
+      <h1>SWARMA <span class="dim">setup</span></h1>
+    </div>
+    <p class="subtitle">deploy your first learning agent swarm in 4 steps.</p>
+
+    <div class="progress" id="progress">
+      <div class="progress-block current"><span class="progress-label">swarm</span></div>
+      <div class="progress-block"><span class="progress-label">template</span></div>
+      <div class="progress-block"><span class="progress-label">experiment</span></div>
+      <div class="progress-block"><span class="progress-label">launch</span></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- Step 1: Name your swarm                      -->
+    <!-- ============================================ -->
+    <div class="step active" id="step-1">
+      <div class="step-header">
+        <h2>1. name your swarm</h2>
+        <p class="step-desc">what should your agent swarm be called and what's its mission?</p>
+      </div>
+      <div class="step-body">
+        <label>swarm name</label>
+        <input id="swarm-name" placeholder="my-content-team" value="">
+        <div class="hint">lowercase, no spaces. this becomes your instance directory.</div>
+
+        <label>what should this swarm do?</label>
+        <textarea id="swarm-goal" placeholder="build and grow a personal brand through ai-assisted content creation across linkedin and twitter."></textarea>
+        <div class="hint">one sentence is fine. your agents will use this as their north star.</div>
+
+        <div class="nav">
+          <div></div>
+          <button class="btn btn-gold" onclick="nextStep()">next</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- Step 2: Pick template + harness              -->
+    <!-- ============================================ -->
+    <div class="step" id="step-2">
+      <div class="step-header">
+        <h2>2. pick your setup</h2>
+        <p class="step-desc">choose a swarm template and the harness that operates it.</p>
+      </div>
+      <div class="step-body">
+
+        <label>swarm template</label>
+        <div class="template-grid" id="template-grid">
+          <div class="template-card selected" data-template="content" onclick="selectTemplate(this)">
+            <div class="template-name">content team</div>
+            <div class="template-desc">research, plan, write, analyze. full content pipeline with learning loop.</div>
+            <div class="template-agents">6 agents: researcher, growth lead, linkedin writer, twitter writer, visual designer, analytics</div>
+          </div>
+          <div class="template-card" data-template="research" onclick="selectTemplate(this)">
+            <div class="template-name">research team</div>
+            <div class="template-desc">deep research, analysis, and reporting across multiple sources.</div>
+            <div class="template-agents">3 agents: researcher, analyst, report writer</div>
+          </div>
+          <div class="template-card" data-template="trading" onclick="selectTemplate(this)">
+            <div class="template-name">trading team</div>
+            <div class="template-desc">market scanning, signal generation, and trade analysis.</div>
+            <div class="template-agents">4 agents: scanner, signal analyst, risk manager, execution</div>
+          </div>
+          <div class="template-card" data-template="custom" onclick="selectTemplate(this)">
+            <div class="template-name">blank canvas</div>
+            <div class="template-desc">start from scratch. add your own agents and define the flow.</div>
+            <div class="template-agents">0 agents: you decide</div>
+          </div>
+        </div>
+
+        <label style="margin-top: 24px">harness <span style="font-size:9px;color:var(--text-dim);text-transform:none;letter-spacing:0">(the operator that runs your swarm)</span></label>
+        <div class="harness-grid" id="harness-grid">
+          <div class="harness-card selected" data-harness="hermes" onclick="selectHarness(this)">
+            <div class="harness-name">hermes <span class="harness-badge">recommended</span></div>
+            <div class="harness-desc">full operator with shared memory, chat interface, and sub-agent delegation.</div>
+            <div class="harness-features">qmd memory / telegram+slack / soul.md personality / mcp tools</div>
+          </div>
+          <div class="harness-card" data-harness="claude-code" onclick="selectHarness(this)">
+            <div class="harness-name">claude code</div>
+            <div class="harness-desc">local terminal operator. agents work through your dev environment.</div>
+            <div class="harness-features">local files / mcp servers / terminal access</div>
+          </div>
+          <div class="harness-card" data-harness="standalone" onclick="selectHarness(this)">
+            <div class="harness-name">standalone</div>
+            <div class="harness-desc">api-only mode. no operator layer, you orchestrate via http.</div>
+            <div class="harness-features">rest api / webhooks / byoo (bring your own operator)</div>
+          </div>
+          <div class="harness-card" data-harness="custom" onclick="selectHarness(this)">
+            <div class="harness-name">custom endpoint</div>
+            <div class="harness-desc">point at your own harness. any system that speaks http.</div>
+            <div class="harness-features">http post brief/result / adapter protocol</div>
+          </div>
+        </div>
+
+        <div class="nav">
+          <button class="btn" onclick="prevStep()">back</button>
+          <button class="btn btn-gold" onclick="nextStep()">next</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- Step 3: First experiment + review agents     -->
+    <!-- ============================================ -->
+    <div class="step" id="step-3">
+      <div class="step-header">
+        <h2>3. first experiment</h2>
+        <p class="step-desc">give your swarm a hypothesis to test. this is how it learns.</p>
+      </div>
+      <div class="step-body">
+        <label>hypothesis</label>
+        <textarea class="mission-input" id="first-mission" placeholder="posts with specific numbers in hooks get more saves than vague hooks"></textarea>
+        <div class="hint">one variable, one change. your swarm will test this and report back with a verdict.</div>
+
+        <label style="margin-top: 20px">agent roster</label>
+        <div class="roster" id="agent-roster">
+          <div class="roster-row header">
+            <div class="roster-cell header-cell">agent</div>
+            <div class="roster-cell header-cell">model</div>
+            <div class="roster-cell header-cell" style="text-align:center"></div>
+          </div>
+          <!-- populated by JS -->
+        </div>
+        <button class="btn btn-small" onclick="addAgent()" style="margin-top: 8px">+ add agent</button>
+
+        <label style="margin-top: 16px">flow</label>
+        <div class="flow-preview" id="flow-preview"></div>
+        <div class="hint">the order agents run in. "->" = sequential, "[a, b]" = parallel.</div>
+
+        <div class="nav">
+          <button class="btn" onclick="prevStep()">back</button>
+          <button class="btn btn-gold" onclick="nextStep()">next</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- Step 4: Connect & Launch                     -->
+    <!-- ============================================ -->
+    <div class="step" id="step-4">
+      <div class="step-header">
+        <h2>4. connect & launch</h2>
+        <p class="step-desc">last step. connect your model provider and fire it up.</p>
+      </div>
+      <div class="step-body">
+
+        <!-- Review summary -->
+        <label>review</label>
+        <div class="review-grid" id="review-summary">
+          <!-- populated by JS -->
+        </div>
+
+        <!-- API Key -->
+        <div class="connect-section" style="margin-top: 20px">
+          <h3>model provider</h3>
+          <div class="connect-row">
+            <div style="flex:1">
+              <label style="margin-top:0">openrouter api key</label>
+              <input id="api-key" type="password" placeholder="sk-or-v1-...">
+            </div>
+            <button class="btn" onclick="testConnection()" id="test-btn" style="margin-bottom:0">test</button>
+          </div>
+          <div class="hint">get one at <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a>. routes to 200+ models. never stored in plain text.</div>
+          <div class="test-result" id="test-result" style="display:none">
+            <span class="test-dot" id="test-dot"></span>
+            <span id="test-msg"></span>
+          </div>
+        </div>
+
+        <!-- Harness-specific config -->
+        <div class="connect-section" id="harness-config" style="display:none">
+          <!-- populated by JS based on harness choice -->
+        </div>
+
+        <!-- CLI output -->
+        <label style="margin-top: 20px">generated config</label>
+        <pre id="config-output"></pre>
+
+        <div class="nav">
+          <button class="btn" onclick="prevStep()">back</button>
+          <button class="btn btn-gold" id="launch-btn" onclick="launchSwarm()">launch swarm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    const totalSteps = 4;
+    let selectedTemplate = 'content';
+    let selectedHarness = 'hermes';
+    let connectionTested = false;
+
+    // ---- Template definitions ----
+    const TEMPLATES = {
+      content: {
+        agents: [
+          { id: 'researcher', model: 'perplexity/sonar-pro' },
+          { id: 'growth-lead', model: 'anthropic/claude-sonnet-4-6' },
+          { id: 'linkedin-writer', model: 'qwen/qwen3.5-plus-02-15' },
+          { id: 'twitter-writer', model: 'qwen/qwen3.5-plus-02-15' },
+          { id: 'visual-designer', model: 'mistralai/mistral-nemo' },
+          { id: 'analytics', model: 'mistralai/mistral-nemo' },
+        ],
+        flow: 'researcher -> growth-lead -> [linkedin-writer, twitter-writer, visual-designer] -> analytics',
+        mission: 'posts with specific numbers in hooks get more saves than vague hooks',
+      },
+      research: {
+        agents: [
+          { id: 'researcher', model: 'perplexity/sonar-pro' },
+          { id: 'analyst', model: 'deepseek/deepseek-r1' },
+          { id: 'report-writer', model: 'qwen/qwen3.5-plus-02-15' },
+        ],
+        flow: 'researcher -> analyst -> report-writer',
+        mission: 'summarizing findings as bullet points produces more actionable reports than narrative prose',
+      },
+      trading: {
+        agents: [
+          { id: 'scanner', model: 'perplexity/sonar-pro' },
+          { id: 'signal-analyst', model: 'deepseek/deepseek-r1' },
+          { id: 'risk-manager', model: 'anthropic/claude-sonnet-4-6' },
+          { id: 'execution', model: 'mistralai/mistral-nemo' },
+        ],
+        flow: 'scanner -> signal-analyst -> risk-manager -> execution',
+        mission: 'liquidation cascade signals produce higher win rates than funding rate extremes',
+      },
+      custom: {
+        agents: [],
+        flow: '',
+        mission: '',
+      },
+    };
+
+    const MODEL_OPTIONS = [
+      { value: 'perplexity/sonar-pro', label: 'perplexity sonar-pro' },
+      { value: 'qwen/qwen3.5-plus-02-15', label: 'qwen 3.5 plus' },
+      { value: 'anthropic/claude-sonnet-4-6', label: 'claude sonnet 4.6' },
+      { value: 'deepseek/deepseek-r1', label: 'deepseek r1' },
+      { value: 'mistralai/mistral-nemo', label: 'mistral nemo' },
+      { value: 'google/gemini-2.5-flash-preview', label: 'gemini 2.5 flash' },
+    ];
+
+    // ---- Progress ----
+    function updateProgress() {
+      const blocks = document.querySelectorAll('.progress-block');
+      blocks.forEach((block, i) => {
+        block.classList.remove('done', 'current');
+        if (i + 1 < currentStep) block.classList.add('done');
+        if (i + 1 === currentStep) block.classList.add('current');
+      });
+    }
+
+    function showStep(n) {
+      for (let i = 1; i <= totalSteps; i++) {
+        document.getElementById('step-' + i).className = 'step' + (i === n ? ' active' : '');
+      }
+      currentStep = n;
+      updateProgress();
+      if (n === 3) populateStep3();
+      if (n === 4) populateStep4();
+    }
+
+    function nextStep() {
+      if (currentStep < totalSteps) showStep(currentStep + 1);
+    }
+    function prevStep() {
+      if (currentStep > 1) showStep(currentStep - 1);
+    }
+
+    // ---- Template selection ----
+    function selectTemplate(el) {
+      document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedTemplate = el.dataset.template;
+    }
+
+    // ---- Harness selection ----
+    function selectHarness(el) {
+      document.querySelectorAll('.harness-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedHarness = el.dataset.harness;
+    }
+
+    // ---- Step 3: Populate agents + flow from template ----
+    function populateStep3() {
+      const tpl = TEMPLATES[selectedTemplate];
+      const roster = document.getElementById('agent-roster');
+
+      // Keep header, clear agent rows
+      const header = roster.querySelector('.header');
+      roster.innerHTML = '';
+      roster.appendChild(header);
+
+      tpl.agents.forEach(a => addAgentRow(a.id, a.model));
+
+      // Set mission
+      const missionEl = document.getElementById('first-mission');
+      if (!missionEl.value || missionEl.dataset.autoFilled === 'true') {
+        missionEl.value = tpl.mission;
+        missionEl.dataset.autoFilled = 'true';
+      }
+
+      updateFlowPreview();
+    }
+
+    function addAgentRow(id, model) {
+      const roster = document.getElementById('agent-roster');
+      const row = document.createElement('div');
+      row.className = 'roster-row';
+
+      const modelOpts = MODEL_OPTIONS.map(m =>
+        `<option value="${m.value}" ${m.value === model ? 'selected' : ''}>${m.label}</option>`
+      ).join('');
+
+      row.innerHTML = `
+        <div class="roster-cell"><input value="${id || ''}" class="agent-id" placeholder="agent-name" oninput="updateFlowPreview()"></div>
+        <div class="roster-cell"><select class="agent-model">${modelOpts}</select></div>
+        <div class="roster-cell" style="text-align:center"><button class="btn-roster-remove" onclick="removeAgent(this)">x</button></div>
+      `;
+      roster.appendChild(row);
+    }
+
+    function addAgent() {
+      addAgentRow('', 'qwen/qwen3.5-plus-02-15');
+    }
+
+    function removeAgent(btn) {
+      const rows = document.querySelectorAll('.roster-row:not(.header)');
+      if (rows.length > 1) {
+        btn.closest('.roster-row').remove();
+        updateFlowPreview();
+      }
+    }
+
+    function getAgents() {
+      const rows = document.querySelectorAll('.roster-row:not(.header)');
+      const agents = [];
+      rows.forEach(row => {
+        const id = row.querySelector('.agent-id').value.trim();
+        const model = row.querySelector('.agent-model').value;
+        if (id) agents.push({ id, model });
+      });
+      return agents;
+    }
+
+    function updateFlowPreview() {
+      const agents = getAgents();
+      const tpl = TEMPLATES[selectedTemplate];
+      const preview = document.getElementById('flow-preview');
+
+      if (tpl.flow && agents.length > 0) {
+        // Use template flow, highlight agent names
+        let html = tpl.flow
+          .replace(/\[([^\]]+)\]/g, (m, inner) => {
+            const parts = inner.split(',').map(s =>
+              `<span class="agent-name">${s.trim()}</span>`
+            ).join(', ');
+            return `<span class="parallel">[${parts}]</span>`;
+          })
+          .replace(/->/g, '<span class="arrow">-></span>');
+
+        // Highlight non-bracketed agent names
+        agents.forEach(a => {
+          const re = new RegExp(`(?<!<[^>]*)\\b${a.id}\\b(?![^<]*>)`, 'g');
+          html = html.replace(re, `<span class="agent-name">${a.id}</span>`);
+        });
+
+        preview.innerHTML = html;
+      } else if (agents.length > 0) {
+        preview.innerHTML = agents.map(a =>
+          `<span class="agent-name">${a.id}</span>`
+        ).join(' <span class="arrow">-></span> ');
+      } else {
+        preview.innerHTML = '<span style="color:var(--text-dim)">add agents to see the flow</span>';
+      }
+    }
+
+    // ---- Step 4: Review + Config ----
+    function populateStep4() {
+      const name = document.getElementById('swarm-name').value.trim() || 'my-swarm';
+      const goal = document.getElementById('swarm-goal').value.trim() || '';
+      const mission = document.getElementById('first-mission').value.trim() || '';
+      const agents = getAgents();
+      const tpl = TEMPLATES[selectedTemplate];
+
+      // Review summary
+      const harnessLabels = {
+        hermes: 'Hermes',
+        'claude-code': 'Claude Code',
+        standalone: 'Standalone (API)',
+        custom: 'Custom Endpoint',
+      };
+
+      const summary = document.getElementById('review-summary');
+      summary.innerHTML = `
+        <div class="review-row">
+          <div class="review-label">swarm</div>
+          <div class="review-value">${name}</div>
+          <div class="review-check check-ok">+</div>
+        </div>
+        <div class="review-row">
+          <div class="review-label">template</div>
+          <div class="review-value">${selectedTemplate}</div>
+          <div class="review-check check-ok">+</div>
+        </div>
+        <div class="review-row">
+          <div class="review-label">harness</div>
+          <div class="review-value">${harnessLabels[selectedHarness] || selectedHarness}</div>
+          <div class="review-check check-ok">+</div>
+        </div>
+        <div class="review-row">
+          <div class="review-label">agents</div>
+          <div class="review-value">${agents.length} agents: ${agents.map(a => a.id).join(', ')}</div>
+          <div class="review-check check-ok">+</div>
+        </div>
+        <div class="review-row">
+          <div class="review-label">first mission</div>
+          <div class="review-value" style="font-size:11px;color:var(--text-dim)">${mission.substring(0, 80)}${mission.length > 80 ? '...' : ''}</div>
+          <div class="review-check ${mission ? 'check-ok' : 'check-pending'}">${mission ? '+' : '-'}</div>
+        </div>
+        <div class="review-row">
+          <div class="review-label">api key</div>
+          <div class="review-value" id="review-api-status" style="color:var(--text-dim)">not tested yet</div>
+          <div class="review-check check-pending" id="review-api-check">-</div>
+        </div>
+      `;
+
+      // Harness-specific config
+      const harnessConfig = document.getElementById('harness-config');
+      if (selectedHarness === 'hermes') {
+        harnessConfig.style.display = 'block';
+        harnessConfig.innerHTML = `
+          <h3>hermes connection</h3>
+          <label style="margin-top:0">hermes gateway url</label>
+          <div class="connect-row">
+            <input id="hermes-url" placeholder="http://localhost:3000" value="http://localhost:3000">
+            <button class="btn" onclick="testHermes()">test</button>
+          </div>
+          <div class="hint">where your hermes instance is running. swarma will register as an mcp server.</div>
+          <div class="test-result" id="hermes-test-result" style="display:none">
+            <span class="test-dot" id="hermes-test-dot"></span>
+            <span id="hermes-test-msg"></span>
+          </div>
+        `;
+      } else if (selectedHarness === 'custom') {
+        harnessConfig.style.display = 'block';
+        harnessConfig.innerHTML = `
+          <h3>custom harness</h3>
+          <label style="margin-top:0">harness endpoint</label>
+          <input id="custom-harness-url" placeholder="https://your-harness.example.com/api">
+          <div class="hint">must accept POST with {brief: ...} and return {result: ...}.</div>
+        `;
+      } else {
+        harnessConfig.style.display = 'none';
+      }
+
+      // Generate config
+      generateConfig();
+    }
+
+    function generateConfig() {
+      const name = document.getElementById('swarm-name').value.trim() || 'my-swarm';
+      const apiKey = document.getElementById('api-key').value.trim() || 'sk-or-v1-YOUR_KEY';
+      const goal = document.getElementById('swarm-goal').value.trim() || '';
+      const mission = document.getElementById('first-mission').value.trim() || '';
+      const agents = getAgents();
+      const tpl = TEMPLATES[selectedTemplate];
+      const flow = tpl.flow || agents.map(a => a.id).join(' -> ');
+
+      const agentYaml = agents.map(a => [
+        `    ${a.id}:`,
+        `      model: ${a.model}`,
+        `      runtime: llm`,
+      ].join('\n')).join('\n');
+
+      const harnessYaml = selectedHarness === 'hermes'
+        ? `harness:\n  type: hermes\n  gateway: ${document.getElementById('hermes-url')?.value || 'http://localhost:3000'}\n  memory: qmd\n`
+        : selectedHarness === 'claude-code'
+        ? `harness:\n  type: claude-code\n  memory: local\n`
+        : selectedHarness === 'custom'
+        ? `harness:\n  type: custom\n  endpoint: ${document.getElementById('custom-harness-url')?.value || 'https://...'}\n`
+        : `harness:\n  type: standalone\n  memory: local\n`;
+
+      const yaml = [
+        `# swarma config -- generated by setup wizard`,
+        `name: ${name}`,
+        ``,
+        `models:`,
+        `  provider: openrouter`,
+        `  api_key: \${OPENROUTER_API_KEY}`,
+        ``,
+        harnessYaml,
+        `team:`,
+        `  goal: "${goal}"`,
+        `  flow: "${flow}"`,
+        `  agents:`,
+        agentYaml,
+        ``,
+        `knowledge:`,
+        `  engine: ${selectedHarness === 'hermes' ? 'qmd' : 'local'}`,
+      ].join('\n');
+
+      document.getElementById('config-output').textContent = yaml;
+    }
+
+    // ---- Test connection ----
+    function testConnection() {
+      const key = document.getElementById('api-key').value.trim();
+      if (!key) return;
+
+      const result = document.getElementById('test-result');
+      const dot = document.getElementById('test-dot');
+      const msg = document.getElementById('test-msg');
+
+      result.style.display = 'flex';
+      dot.className = 'test-dot pending';
+      msg.textContent = 'testing connection...';
+      msg.style.color = 'var(--turmeric)';
+
+      // Simulate test -- in real impl this hits OpenRouter /models
+      setTimeout(() => {
+        if (key.startsWith('sk-or-')) {
+          dot.className = 'test-dot ok';
+          msg.textContent = 'connected to openrouter. models available.';
+          msg.style.color = 'var(--green)';
+          connectionTested = true;
+
+          // Update review
+          const reviewStatus = document.getElementById('review-api-status');
+          const reviewCheck = document.getElementById('review-api-check');
+          if (reviewStatus) {
+            reviewStatus.textContent = 'connected';
+            reviewStatus.style.color = 'var(--green)';
+          }
+          if (reviewCheck) {
+            reviewCheck.textContent = '+';
+            reviewCheck.className = 'review-check check-ok';
+          }
+        } else {
+          dot.className = 'test-dot err';
+          msg.textContent = 'invalid key format. should start with sk-or-';
+          msg.style.color = 'var(--red-hot)';
+        }
+        generateConfig();
+      }, 1200);
+    }
+
+    function testHermes() {
+      const url = document.getElementById('hermes-url').value.trim();
+      const result = document.getElementById('hermes-test-result');
+      const dot = document.getElementById('hermes-test-dot');
+      const msg = document.getElementById('hermes-test-msg');
+
+      result.style.display = 'flex';
+      dot.className = 'test-dot pending';
+      msg.textContent = 'pinging hermes gateway...';
+      msg.style.color = 'var(--turmeric)';
+
+      setTimeout(() => {
+        dot.className = 'test-dot ok';
+        msg.textContent = 'hermes gateway reachable. qmd memory available.';
+        msg.style.color = 'var(--green)';
+      }, 1500);
+    }
+
+    // ---- Launch ----
+    function launchSwarm() {
+      const btn = document.getElementById('launch-btn');
+      btn.textContent = 'deploying...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        btn.textContent = 'launched!';
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+      }, 2000);
+    }
+
+    // ---- Init ----
+    updateProgress();
+  </script>
+</body>
+</html>

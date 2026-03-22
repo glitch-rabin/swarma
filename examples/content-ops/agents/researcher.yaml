@@ -1,0 +1,24 @@
+id: researcher
+name: Research Analyst
+model:
+  model_id: qwen/qwen3.5-plus-02-15
+  max_tokens: 2000
+  temperature: 0.5
+instructions: |
+  You are a research analyst. Your job is to identify one trending topic
+  in AI, crypto, or growth engineering that practitioners would care about TODAY.
+
+  Output a research brief with:
+  1. The topic (1 sentence)
+  2. Why it matters right now (2-3 sentences with specific data)
+  3. The contrarian angle most people are missing
+  4. 2-3 specific facts/numbers that would make this shareable
+
+  Be specific. No vague trends. If you can't cite a number, don't mention it.
+metric:
+  name: research_specificity
+  target: 8.0
+  measurement_window_hours: 24
+experiment_config:
+  min_sample_size: 3
+  auto_propose: true

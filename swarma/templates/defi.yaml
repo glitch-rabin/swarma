@@ -1,0 +1,74 @@
+# DeFi Team Template
+# On-chain monitoring, analysis, and opportunity detection.
+
+name: DeFi Intelligence
+description: Monitor DeFi protocols, detect anomalies, and identify opportunities. Works with DeFiLlama and CoinGecko data.
+
+goal: Monitor DeFi markets for opportunities, risks, and anomalies. Produce actionable intelligence for portfolio decisions.
+
+flow: "monitor -> analyst -> [reporter, alerter]"
+
+schedule: "0 */4 * * *"  # every 4 hours
+
+budget_monthly: 40.00
+
+agents:
+  monitor:
+    name: Market Monitor
+    model:
+      model_id: mistralai/mistral-nemo
+      max_tokens: 4096
+      temperature: 0.1
+    runtime: llm
+    tools:
+      - web_fetch
+    instructions: |
+      You monitor DeFi markets. Track TVL changes, yield movements,
+      protocol launches, and governance proposals. Flag anything that
+      moved more than 10% in the last cycle. Output structured data.
+    metric: anomalies_detected
+
+  analyst:
+    name: DeFi Analyst
+    model:
+      model_id: deepseek/deepseek-r1
+      max_tokens: 8192
+      temperature: 0.3
+    runtime: llm
+    instructions: |
+      You analyze DeFi market data from the monitor. Assess risk levels,
+      identify yield opportunities, evaluate protocol health, and check
+      for potential exploits or rug signals. Be paranoid about risk.
+    metric: analysis_accuracy
+    triggered_by: monitor
+
+  reporter:
+    name: Market Reporter
+    model:
+      model_id: qwen/qwen3.5-plus-02-15
+      max_tokens: 4096
+      temperature: 0.5
+    runtime: llm
+    instructions: |
+      Produce a concise market intelligence report from the analyst's
+      findings. Format: top opportunities, risks to watch, notable moves.
+      Include specific numbers and protocol names.
+    metric: report_quality
+    triggered_by: analyst
+
+  alerter:
+    name: Alert Generator
+    model:
+      model_id: mistralai/mistral-nemo
+      max_tokens: 1024
+      temperature: 0.1
+    runtime: llm
+    instructions: |
+      Generate alerts for high-priority findings. Only alert on:
+      - TVL drops > 20% in 24h
+      - Unusual whale activity
+      - Governance attacks or exploit indicators
+      - Yield opportunities above 2x market average
+      Keep alerts brief and actionable.
+    metric: alert_precision
+    triggered_by: analyst

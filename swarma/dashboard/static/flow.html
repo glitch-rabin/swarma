@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>swarma -- flow</title>
+  <link rel="stylesheet" href="/static/shared.css">
+  <style>
+    .flow-pipeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 20px 0;
+      overflow-x: auto;
+    }
+    .flow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .flow-node {
+      padding: 10px 18px;
+      border: 2px solid var(--border);
+      background: var(--surface-raised);
+      font-size: 12px;
+      color: var(--text);
+      text-align: center;
+      min-width: 100px;
+      box-shadow: 2px 2px 0 var(--shadow);
+    }
+    .flow-node:hover {
+      border-color: var(--gold);
+      color: var(--gold-light);
+    }
+    .flow-parallel {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+    }
+    .flow-parallel .flow-node {
+      border-color: var(--gold-dim);
+    }
+    .flow-parallel-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-bottom: 2px;
+    }
+    .flow-arrow {
+      color: var(--gold-dim);
+      font-size: 14px;
+      padding: 0 12px;
+      flex-shrink: 0;
+      letter-spacing: 2px;
+    }
+    .flow-raw {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: var(--surface-raised);
+      border: 1px dashed var(--border);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .flow-raw .arrow { color: var(--gold); }
+    .flow-raw .parallel { color: var(--gold-light); }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <div class="main">
+      <div class="page-header">
+        <h2>flow</h2>
+      </div>
+
+      <div class="page-content" id="flow-content">
+        <div class="loading">loading</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/shared.js"></script>
+  <script>
+
+    /**
+     * Parse a flow DSL string into steps.
+     * e.g. "researcher -> planner -> [writer, designer] -> analytics"
+     * Returns array of {agents: string[], parallel: boolean}
+     */
+    function parseFlow(flowStr) {
+      if (!flowStr || !flowStr.trim()) return [];
+
+      const steps = [];
+      let current = '';
+      let inBracket = false;
+
+      for (const char of flowStr) {
+        if (char === '[') {
+          inBracket = true;
+          current += char;
+        } else if (char === ']') {
+          inBracket = false;
+          current += char;
+        } else {
+          current += char;
+        }
+      }
+
+      // Split on -> outside brackets
+      const raw = flowStr.trim();
+      const parts = [];
+      let buf = '';
+      let bracket = false;
+
+      for (let i = 0; i < raw.length; i++) {
+        const ch = raw[i];
+        if (ch === '[') bracket = true;
+        if (ch === ']') bracket = false;
+
+        if (!bracket && raw.substring(i, i + 4) === ' -> ') {
+          parts.push(buf.trim());
+          buf = '';
+          i += 3; // skip " -> "
+        } else {
+          buf += ch;
+        }
+      }
+      if (buf.trim()) parts.push(buf.trim());
+
+      for (const part of parts) {
+        const trimmed = part.trim();
+        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+          const inner = trimmed.slice(1, -1);
+          const agents = inner.split(',').map(a => a.trim()).filter(Boolean);
+          steps.push({ agents, parallel: true });
+        } else if (trimmed) {
+          steps.push({ agents: [trimmed], parallel: false });
+        }
+      }
+
+      return steps;
+    }
+
+    /**
+     * Render a parsed flow as a visual pipeline.
+     */
+    function renderFlow(steps) {
+      let html = '<div class="flow-pipeline">';
+
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+
+        if (i > 0) {
+          html += '<div class="flow-arrow">--></div>';
+        }
+
+        if (step.parallel) {
+          html += '<div class="flow-step"><div class="flow-parallel">';
+          html += '<div class="flow-parallel-label">parallel</div>';
+          for (const agent of step.agents) {
+            html += `<div class="flow-node">${agent}</div>`;
+          }
+          html += '</div></div>';
+        } else {
+          html += `<div class="flow-step"><div class="flow-node">${step.agents[0]}</div></div>`;
+        }
+      }
+
+      html += '</div>';
+      return html;
+    }
+
+    /**
+     * Render the raw flow string with syntax highlighting.
+     */
+    function renderFlowRaw(flowStr) {
+      let html = flowStr
+        .replace(/\[([^\]]+)\]/g, (m, inner) => {
+          const parts = inner.split(',').map(s => s.trim()).join(', ');
+          return `<span class="parallel">[${parts}]</span>`;
+        })
+        .replace(/->/g, '<span class="arrow">-></span>');
+      return `<div class="flow-raw">${html}</div>`;
+    }
+
+    async function loadFlows() {
+      const container = document.getElementById('flow-content');
+
+      try {
+        const data = await api('/teams');
+        const teamIds = Object.keys(data);
+
+        if (teamIds.length === 0) {
+          container.innerHTML = '<div class="empty">no teams configured yet. run setup to create one.</div>';
+          return;
+        }
+
+        let html = '';
+
+        for (const tid of teamIds) {
+          const team = data[tid];
+          const flowStr = team.flow || '';
+          const steps = parseFlow(flowStr);
+
+          html += `
+            <div class="card">
+              <div class="card-header">
+                <div><span class="prefix">-</span><h3 style="display:inline">${team.name || tid}</h3></div>
+                <span style="font-size:10px;color:var(--text-dim)">${(team.agents || []).length} agents</span>
+              </div>
+              <div class="card-body">
+          `;
+
+          if (steps.length === 0) {
+            html += '<div class="empty">no flow defined for this team.</div>';
+          } else {
+            html += renderFlow(steps);
+            html += renderFlowRaw(flowStr);
+          }
+
+          html += '</div></div>';
+        }
+
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = '<div class="empty">could not load team flows.</div>';
+      }
+    }
+
+    renderSidebar('flow');
+    loadFlows();
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>swarma -- agent detail</title>
+  <link rel="stylesheet" href="/static/shared.css">
+  <style>
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      border: 2px solid var(--border);
+    }
+    .detail-label {
+      padding: 8px 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      background: var(--surface-raised);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-value {
+      padding: 8px 12px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-grid > :nth-last-child(-n+2) { border-bottom: none; }
+
+    .tool-tag {
+      display: inline-block;
+      padding: 1px 6px;
+      font-size: 10px;
+      color: var(--gold);
+      border: 1px solid var(--gold-dim);
+      background: rgba(212, 132, 28, 0.1);
+      margin: 2px 4px 2px 0;
+    }
+
+    .instructions-block {
+      background: var(--surface-raised);
+      border: 2px solid var(--border);
+      padding: 12px 16px;
+      font-size: 11px;
+      line-height: 1.6;
+      color: var(--text-dim);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <div class="main">
+      <div class="page-header">
+        <div class="breadcrumb">
+          <a href="/agents-view">agents</a> &gt; <span id="breadcrumb-team">...</span> &gt; <span id="breadcrumb-agent">...</span>
+        </div>
+        <h2 id="agent-title">loading...</h2>
+      </div>
+
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-tab="overview">overview</button>
+        <button class="tab" data-tab="configuration">configuration</button>
+        <button class="tab" data-tab="runs">runs</button>
+        <button class="tab" data-tab="strategy">strategy</button>
+        <button class="tab" data-tab="experiments">experiments</button>
+      </div>
+
+      <div class="page-content">
+
+        <!-- OVERVIEW TAB -->
+        <div class="tab-content active" id="tab-overview">
+          <div class="card-grid">
+            <div class="card">
+              <div class="card-header">
+                <h3>agent info</h3>
+              </div>
+              <div class="card-body" id="overview-info">
+                <div class="loading">loading</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>metric</h3>
+              </div>
+              <div class="card-body" id="overview-metric">
+                <div class="loading">loading</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>tools</h3>
+            </div>
+            <div class="card-body" id="overview-tools">
+              <div class="loading">loading</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div><span class="prefix">&gt;</span><h3 style="display:inline">recent runs</h3></div>
+            </div>
+            <div class="card-body" id="overview-runs" style="padding:0;">
+              <div class="loading">loading</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONFIGURATION TAB -->
+        <div class="tab-content" id="tab-configuration">
+          <div class="card">
+            <div class="card-header">
+              <h3>full configuration</h3>
+            </div>
+            <div class="card-body" id="config-body">
+              <div class="loading">loading</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RUNS TAB -->
+        <div class="tab-content" id="tab-runs">
+          <div class="card">
+            <div class="card-header">
+              <h3>run history</h3>
+            </div>
+            <div class="card-body" id="runs-body" style="padding:0;">
+              <div class="loading">loading</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STRATEGY TAB -->
+        <div class="tab-content" id="tab-strategy">
+          <div class="card">
+            <div class="card-header">
+              <h3>strategy.md</h3>
+            </div>
+            <div class="card-body" id="strategy-body">
+              <div class="loading">loading</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPERIMENTS TAB -->
+        <div class="tab-content" id="tab-experiments">
+          <div class="card">
+            <div class="card-header">
+              <h3>experiments</h3>
+            </div>
+            <div class="card-body" id="experiments-body" style="padding:0;">
+              <div class="loading">loading</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/shared.js"></script>
+  <script>
+
+    // ---- Extract team_id and agent_id from URL ----
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    // URL pattern: /agent/{team}/{agent}
+    const teamId = pathParts[1] || '';
+    const agentId = pathParts[2] || '';
+
+    let agentData = null;
+    let strategyData = null;
+
+    // ---- Tab switching ----
+    document.getElementById('tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab');
+      if (!tab) return;
+      const target = tab.dataset.tab;
+
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + target).classList.add('active');
+    });
+
+    // ---- Load data ----
+    async function loadAgent() {
+      // Set breadcrumbs immediately
+      document.getElementById('breadcrumb-team').textContent = teamId;
+      document.getElementById('breadcrumb-agent').textContent = agentId;
+      document.getElementById('agent-title').textContent = agentId;
+
+      try {
+        agentData = await api(`/agents/${teamId}/${agentId}`);
+      } catch (e) {
+        document.getElementById('agent-title').textContent = 'agent not found';
+        return;
+      }
+
+      try {
+        strategyData = await api(`/agents/${teamId}/${agentId}/strategy`);
+      } catch (e) {
+        strategyData = { content: 'no strategy file found.' };
+      }
+
+      renderOverview();
+      renderConfiguration();
+      renderRuns();
+      renderStrategy();
+      renderExperiments();
+    }
+
+    // ---- Overview tab ----
+    function renderOverview() {
+      const d = agentData;
+      const modelShort = (d.model || '').split('/').pop();
+      const runtimeCls = d.runtime === 'hermes' ? 'tag-hermes' : 'tag-llm';
+
+      // Info
+      document.getElementById('overview-info').innerHTML = `
+        <div class="detail-grid">
+          <div class="detail-label">name</div>
+          <div class="detail-value">${d.name}</div>
+          <div class="detail-label">model</div>
+          <div class="detail-value">${modelShort}</div>
+          <div class="detail-label">runtime</div>
+          <div class="detail-value"><span class="tag ${runtimeCls}">${d.runtime}</span></div>
+        </div>
+      `;
+
+      // Metric
+      const metricEl = document.getElementById('overview-metric');
+      if (d.metric && d.metric.name) {
+        metricEl.innerHTML = `
+          <div class="detail-grid">
+            <div class="detail-label">metric</div>
+            <div class="detail-value">${d.metric.name}</div>
+            <div class="detail-label">target</div>
+            <div class="detail-value">${d.metric.target || '-'}</div>
+          </div>
+        `;
+      } else {
+        metricEl.innerHTML = '<div class="empty">no metric configured.</div>';
+      }
+
+      // Instructions summary
+      const instrSummary = d.instructions
+        ? (d.instructions.length > 200 ? d.instructions.substring(0, 200) + '...' : d.instructions)
+        : null;
+
+      // Tools
+      const toolsEl = document.getElementById('overview-tools');
+      if (d.tools && d.tools.length > 0) {
+        toolsEl.innerHTML = d.tools.map(t => `<span class="tool-tag">${t}</span>`).join('');
+      } else {
+        toolsEl.innerHTML = '<div class="empty">no tools assigned.</div>';
+      }
+
+      // Recent 5 runs
+      const runsEl = document.getElementById('overview-runs');
+      const runs = (d.recent_runs || []).slice(0, 5);
+      if (runs.length === 0) {
+        runsEl.innerHTML = '<div class="empty">no runs yet.</div>';
+      } else {
+        runsEl.innerHTML = renderRunsTable(runs);
+      }
+    }
+
+    // ---- Configuration tab ----
+    function renderConfiguration() {
+      const d = agentData;
+      const modelShort = (d.model || '').split('/').pop();
+      const runtimeCls = d.runtime === 'hermes' ? 'tag-hermes' : 'tag-llm';
+
+      let html = `
+        <div class="detail-grid">
+          <div class="detail-label">model</div>
+          <div class="detail-value">${d.model}</div>
+          <div class="detail-label">runtime</div>
+          <div class="detail-value"><span class="tag ${runtimeCls}">${d.runtime}</span></div>
+          <div class="detail-label">tools</div>
+          <div class="detail-value">${d.tools && d.tools.length > 0 ? d.tools.map(t => `<span class="tool-tag">${t}</span>`).join('') : '<span style="color:var(--text-dim)">none</span>'}</div>
+          <div class="detail-label">expert lenses</div>
+          <div class="detail-value">${d.expert_lenses && d.expert_lenses.length > 0 ? d.expert_lenses.join(', ') : '<span style="color:var(--text-dim)">none</span>'}</div>
+          <div class="detail-label">schedule</div>
+          <div class="detail-value">${d.schedule || '<span style="color:var(--text-dim)">none (trigger-based)</span>'}</div>
+          <div class="detail-label">triggered by</div>
+          <div class="detail-value">${d.triggered_by || '<span style="color:var(--text-dim)">none</span>'}</div>
+        </div>
+      `;
+
+      if (d.instructions) {
+        html += `
+          <div style="margin-top:16px">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:6px">instructions</div>
+            <div class="instructions-block">${escapeHtml(d.instructions)}</div>
+          </div>
+        `;
+      }
+
+      document.getElementById('config-body').innerHTML = html;
+    }
+
+    // ---- Runs tab ----
+    function renderRuns() {
+      const runs = agentData.recent_runs || [];
+      const container = document.getElementById('runs-body');
+
+      if (runs.length === 0) {
+        container.innerHTML = '<div class="empty">no runs recorded yet.</div>';
+        return;
+      }
+
+      container.innerHTML = renderRunsTable(runs);
+    }
+
+    function renderRunsTable(runs) {
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>id</th>
+              <th>type</th>
+              <th>status</th>
+              <th>started</th>
+              <th>completed</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      for (const run of runs) {
+        html += `
+          <tr>
+            <td>${run.id || '-'}</td>
+            <td>${run.run_type || run.type || '-'}</td>
+            <td>${verdictTag(run.status || 'pending')}</td>
+            <td>${formatTimestamp(run.started_at)}</td>
+            <td>${formatTimestamp(run.completed_at)}</td>
+          </tr>
+        `;
+      }
+
+      html += '</tbody></table>';
+      return html;
+    }
+
+    // ---- Strategy tab ----
+    function renderStrategy() {
+      const container = document.getElementById('strategy-body');
+      if (strategyData && strategyData.content) {
+        container.innerHTML = `<pre>${escapeHtml(strategyData.content)}</pre>`;
+        if (strategyData.path) {
+          container.innerHTML += `<div class="hint" style="margin-top:8px">source: ${strategyData.path}</div>`;
+        }
+      } else {
+        container.innerHTML = '<div class="empty">no strategy file found yet. run an experiment to start learning.</div>';
+      }
+    }
+
+    // ---- Experiments tab ----
+    function renderExperiments() {
+      const experiments = agentData.experiments || [];
+      const container = document.getElementById('experiments-body');
+
+      if (experiments.length === 0) {
+        container.innerHTML = '<div class="empty">no experiments for this agent yet.</div>';
+        return;
+      }
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>hypothesis</th>
+              <th>verdict</th>
+              <th>metric</th>
+              <th>sample size</th>
+              <th>created</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      for (const exp of experiments) {
+        html += `
+          <tr>
+            <td>${truncate(exp.hypothesis || '-', 80)}</td>
+            <td>${verdictTag(exp.verdict || exp.status || 'pending')}</td>
+            <td>${exp.metric_name || '-'}</td>
+            <td>${exp.sample_size || '-'}</td>
+            <td>${formatTimestamp(exp.created_at)}</td>
+          </tr>
+        `;
+      }
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    // ---- Helpers ----
+    function truncate(str, len) {
+      if (!str) return '-';
+      return str.length > len ? str.substring(0, len) + '...' : str;
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ---- Init ----
+    renderSidebar('agents');
+    loadAgent();
+
+  </script>
+</body>
+</html>

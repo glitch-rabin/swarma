@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Environment
+.env
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# swarma runtime (instances live in ~/.swarma/)
+state.db
+*.db-journal
+
+# Internal docs (not for public repo)
+BRAND.md
+BUILD-PLAN.md
+scripts/render_logo.py

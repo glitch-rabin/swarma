@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>swarma -- playbook</title>
+  <link rel="stylesheet" href="/static/shared.css">
+</head>
+<body>
+  <div class="app-layout">
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <div class="main">
+      <div class="page-header">
+        <h2>playbook</h2>
+        <div class="breadcrumb" style="margin-top:4px">validated patterns from the learning loop</div>
+      </div>
+
+      <div class="page-content">
+        <div id="playbook-content"><div class="loading">loading</div></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/shared.js"></script>
+  <script>
+    // ---- Load playbook patterns ----
+
+    async function loadPlaybook() {
+      const container = document.getElementById('playbook-content');
+      try {
+        const data = await api('/playbook');
+        const patterns = Array.isArray(data) ? data : (data.patterns || data.entries || []);
+
+        if (!patterns.length) {
+          container.innerHTML = '<div class="empty">no validated patterns yet. run experiments to start learning.</div>';
+          return;
+        }
+
+        let html = '<div class="card"><div class="card-body">';
+
+        for (const p of patterns) {
+          const hypothesis = p.hypothesis || p.pattern || '-';
+          const expId = p.experiment_id || p.id || '?';
+          const agent = p.agent_id || '-';
+          const date = formatDate(p.created_at || p.validated_at);
+          const improvement = p.improvement_pct != null
+            ? `<div style="margin-top:4px;font-size:11px;color:var(--green-light)">${p.improvement_pct > 0 ? '+' : ''}${p.improvement_pct.toFixed(1)}% improvement over baseline</div>`
+            : '';
+
+          html += `
+            <div class="feed-item">
+              <div class="feed-dot" style="background:var(--green)"></div>
+              <div class="feed-content">
+                <div class="feed-hypothesis">
+                  <span class="tag tag-keep">keep</span>
+                  <span style="margin-left:8px">${hypothesis}</span>
+                </div>
+                <div class="feed-meta">
+                  from experiment #${expId} &middot; ${agent} &middot; ${date}
+                </div>
+                ${improvement}
+              </div>
+            </div>
+          `;
+        }
+
+        html += '</div></div>';
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = '<div class="empty">could not load playbook.</div>';
+      }
+    }
+
+    // ---- Init ----
+
+    renderSidebar('playbook');
+    loadPlaybook();
+  </script>
+</body>
+</html>

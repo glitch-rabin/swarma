@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>swarma -- experiments</title>
+  <link rel="stylesheet" href="/static/shared.css">
+</head>
+<body>
+  <div class="app-layout">
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <div class="main">
+      <div class="page-header">
+        <h2>experiments</h2>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="running" onclick="switchTab('running')">running</button>
+        <button class="tab" data-tab="results" onclick="switchTab('results')">results</button>
+      </div>
+
+      <div class="page-content">
+
+        <!-- Running tab -->
+        <div id="tab-running">
+          <div id="running-content"><div class="loading">loading</div></div>
+        </div>
+
+        <!-- Results tab -->
+        <div id="tab-results" style="display:none">
+          <div id="results-content"><div class="loading">loading</div></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/shared.js"></script>
+  <script>
+    // ---- Tab switching ----
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+
+      document.getElementById('tab-running').style.display = tab === 'running' ? '' : 'none';
+      document.getElementById('tab-results').style.display = tab === 'results' ? '' : 'none';
+    }
+
+    // ---- Load running experiments ----
+
+    async function loadRunning() {
+      const container = document.getElementById('running-content');
+      try {
+        const data = await api('/experiments?status=running');
+        const experiments = Array.isArray(data) ? data : (data.experiments || []);
+
+        if (!experiments.length) {
+          container.innerHTML = '<div class="empty">no experiments running. create one to start learning.</div>';
+          return;
+        }
+
+        let html = '';
+        for (const exp of experiments) {
+          const progress = exp.current_sample || 0;
+          const needed = exp.sample_size || 5;
+          const pct = Math.min(100, Math.round((progress / needed) * 100));
+
+          html += `
+            <div class="card">
+              <div class="card-header">
+                <h3>${exp.hypothesis || 'untitled experiment'}</h3>
+                <span class="tag tag-running">running</span>
+              </div>
+              <div class="card-body">
+                <table>
+                  <tr>
+                    <th>metric</th>
+                    <th>progress</th>
+                    <th>agent</th>
+                    <th>team</th>
+                    <th>created</th>
+                  </tr>
+                  <tr>
+                    <td>${exp.metric_name || '-'}</td>
+                    <td>
+                      <span style="color:var(--gold-light)">${progress}</span>
+                      <span style="color:var(--text-dim)">/ ${needed}</span>
+                      <span style="color:var(--text-dim);font-size:10px;margin-left:6px">(${pct}%)</span>
+                    </td>
+                    <td>${exp.agent_id || '-'}</td>
+                    <td>${exp.team_id || '-'}</td>
+                    <td style="font-size:11px;color:var(--text-dim)">${formatDate(exp.created_at)}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = '<div class="empty">could not load running experiments.</div>';
+      }
+    }
+
+    // ---- Load results ----
+
+    async function loadResults() {
+      const container = document.getElementById('results-content');
+      try {
+        const data = await api('/experiments');
+        const all = Array.isArray(data) ? data : (data.experiments || []);
+        const experiments = all.filter(e => e.status !== 'running');
+
+        if (!experiments.length) {
+          container.innerHTML = '<div class="empty">no completed experiments yet. let some finish first.</div>';
+          return;
+        }
+
+        let html = '<div class="card"><div class="card-body"><table>';
+        html += '<tr><th>verdict</th><th>hypothesis</th><th>result</th><th>improvement</th><th>agent</th><th>closed</th></tr>';
+
+        for (const exp of experiments) {
+          const verdict = exp.verdict || exp.status || 'inconclusive';
+          const improvement = exp.improvement_pct != null
+            ? `<span style="color:${exp.improvement_pct > 0 ? 'var(--green-light)' : 'var(--red-hot)'}">${exp.improvement_pct > 0 ? '+' : ''}${exp.improvement_pct.toFixed(1)}%</span>`
+            : '<span style="color:var(--text-dim)">-</span>';
+
+          html += `
+            <tr>
+              <td>${verdictTag(verdict)}</td>
+              <td style="max-width:300px">${exp.hypothesis || '-'}</td>
+              <td>${exp.result_value != null ? exp.result_value : '-'}</td>
+              <td>${improvement}</td>
+              <td>${exp.agent_id || '-'}</td>
+              <td style="font-size:11px;color:var(--text-dim)">${formatDate(exp.closed_at || exp.updated_at)}</td>
+            </tr>
+          `;
+        }
+
+        html += '</table></div></div>';
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = '<div class="empty">could not load experiment results.</div>';
+      }
+    }
+
+    // ---- Callback for new experiment modal ----
+
+    function onExperimentCreated() {
+      loadRunning();
+      loadResults();
+    }
+
+    // ---- Init ----
+
+    renderSidebar('experiments');
+    loadRunning();
+    loadResults();
+  </script>
+</body>
+</html>

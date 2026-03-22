@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>swarma -- agents</title>
+  <link rel="stylesheet" href="/static/shared.css">
+</head>
+<body>
+  <div class="app-layout">
+    <nav class="sidebar" id="sidebar"></nav>
+
+    <div class="main">
+      <div class="page-header">
+        <h2>agents</h2>
+      </div>
+
+      <div class="page-content">
+        <div class="card">
+          <div class="card-header">
+            <div><span class="prefix">&gt;</span><h3 style="display:inline">agent roster</h3></div>
+          </div>
+          <div class="card-body" id="agents-table" style="padding:0;">
+            <div class="loading">loading</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/shared.js"></script>
+  <script>
+
+    async function loadAgents() {
+      const container = document.getElementById('agents-table');
+      try {
+        const data = await api('/agents');
+        const keys = Object.keys(data);
+
+        if (keys.length === 0) {
+          container.innerHTML = '<div class="empty">no agents configured yet.</div>';
+          return;
+        }
+
+        let html = `
+          <table>
+            <thead>
+              <tr>
+                <th>name</th>
+                <th>team</th>
+                <th>model</th>
+                <th>runtime</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        for (const key of keys) {
+          const agent = data[key];
+          const team = agent.team;
+          const name = agent.name;
+          const modelShort = (agent.model || '').split('/').pop();
+          const runtimeCls = agent.runtime === 'hermes' ? 'tag-hermes' : 'tag-llm';
+
+          html += `
+            <tr>
+              <td><a href="/agent/${team}/${name}">${name}</a></td>
+              <td>${team}</td>
+              <td>${modelShort}</td>
+              <td><span class="tag ${runtimeCls}">${agent.runtime}</span></td>
+            </tr>
+          `;
+        }
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = '<div class="empty">no agents configured yet.</div>';
+      }
+    }
+
+    renderSidebar('agents');
+    loadAgents();
+
+  </script>
+</body>
+</html>

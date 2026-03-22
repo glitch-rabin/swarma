@@ -1,0 +1,57 @@
+# Research Team Template
+# Multi-source intelligence gathering with synthesis.
+
+name: Research Team
+description: Automated research pipeline. Scans multiple sources, cross-references findings, and produces structured intelligence briefs.
+
+goal: Monitor and synthesize information from multiple sources into actionable intelligence briefs.
+
+flow: "scanner -> analyst -> synthesizer"
+
+schedule: "0 6 * * *"  # daily at 6am
+
+budget_monthly: 30.00
+
+agents:
+  scanner:
+    name: Source Scanner
+    model:
+      model_id: perplexity/sonar-pro
+      max_tokens: 4096
+      temperature: 0.2
+    runtime: llm
+    tools:
+      - web_search
+    instructions: |
+      You scan multiple sources for developments in the configured domains.
+      Output structured findings with source URLs, relevance scores, and
+      brief summaries. Prioritize primary sources over commentary.
+    metric: findings_quality
+
+  analyst:
+    name: Intelligence Analyst
+    model:
+      model_id: deepseek/deepseek-r1
+      max_tokens: 8192
+      temperature: 0.3
+    runtime: llm
+    instructions: |
+      You analyze raw findings from the scanner. Cross-reference claims,
+      identify patterns, flag contradictions, and assess significance.
+      Output a structured analysis with confidence levels.
+    metric: analysis_accuracy
+    triggered_by: scanner
+
+  synthesizer:
+    name: Brief Synthesizer
+    model:
+      model_id: qwen/qwen3.5-plus-02-15
+      max_tokens: 4096
+      temperature: 0.4
+    runtime: llm
+    instructions: |
+      You produce the final intelligence brief. Combine scanner findings
+      with analyst assessments into a clear, actionable document.
+      Lead with the most important insights. Include action items.
+    metric: brief_quality
+    triggered_by: analyst

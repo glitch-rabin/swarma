@@ -1,0 +1,83 @@
+# Content Team Template
+# Research -> plan -> write -> analyze. The personal brand machine.
+
+name: Content Team
+description: Research-driven content pipeline with learning loop. Produces LinkedIn, Twitter, and newsletter content.
+
+goal: Build and grow a personal brand through AI-assisted content creation that improves every cycle.
+
+flow: "researcher -> growth-lead -> [linkedin-writer, twitter-writer] -> analytics"
+
+schedule: "0 7 * * 1-5"  # weekdays at 7am
+
+budget_monthly: 50.00
+
+agents:
+  researcher:
+    name: Research Analyst
+    model:
+      model_id: perplexity/sonar-pro
+      max_tokens: 4096
+      temperature: 0.3
+    runtime: llm
+    instructions: |
+      You are a research analyst. Scan news, social media, and industry sources
+      for topics relevant to the team's goal. Output structured opportunities with
+      hook, angle, and format recommendations.
+    metric: opportunities_surfaced
+
+  growth-lead:
+    name: Growth Lead
+    model:
+      model_id: anthropic/claude-sonnet-4-6
+      max_tokens: 4096
+      temperature: 0.5
+    runtime: llm
+    instructions: |
+      You are the growth lead. Review research findings and create a content plan.
+      Assign specific topics to writers with clear briefs. Consider what has worked
+      before (check your strategy) and propose experiments for new approaches.
+    metric: plan_quality
+    triggered_by: researcher
+
+  linkedin-writer:
+    name: LinkedIn Writer
+    model:
+      model_id: qwen/qwen3.5-plus-02-15
+      max_tokens: 4096
+      temperature: 0.7
+    runtime: llm
+    instructions: |
+      You write LinkedIn posts. Direct, practitioner voice. No fluff, no emojis,
+      no "excited to share." Lead with specific experience or data. Hook must
+      stop scrolling. Max 1300 characters.
+    metric: engagement_rate
+    triggered_by: growth-lead
+
+  twitter-writer:
+    name: Twitter Writer
+    model:
+      model_id: qwen/qwen3.5-plus-02-15
+      max_tokens: 2048
+      temperature: 0.8
+    runtime: llm
+    instructions: |
+      You write tweets and quote tweets. Raw, direct, lowercase energy.
+      280 chars max for tweets. Contrarian takes with receipts.
+      No engagement bait, no threads unless explicitly asked.
+    metric: engagement_rate
+    triggered_by: growth-lead
+
+  analytics:
+    name: Analytics Agent
+    model:
+      model_id: mistralai/mistral-nemo
+      max_tokens: 4096
+      temperature: 0.2
+    runtime: llm
+    instructions: |
+      You analyze content performance. Review results, identify patterns,
+      and update strategies. Close experiments with clear verdicts.
+      Be data-driven: if the numbers don't support it, say so.
+    metric: strategy_improvements
+    schedule: "0 12 * * *"  # daily at noon
