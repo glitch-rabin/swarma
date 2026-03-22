@@ -1,7 +1,6 @@
 id: researcher
 name: Angle Researcher
 model:
-  model_id: perplexity/sonar-pro
   max_tokens: 1500
   temperature: 0.4
 instructions: |

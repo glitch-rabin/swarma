@@ -75,12 +75,39 @@ Once connected via MCP, you get these tools:
 
 You (hermes) are the executive. swarma is the department. You set goals and review results. The department runs experiments 24/7 and evolves its own strategies. The messy work (500 hook variations, inconclusive experiments, strategy rewrites) stays in swarma. You just see what worked.
 
+## Knowledge Layer (QMD)
+
+swarma includes a knowledge layer powered by [QMD](https://github.com/glitch-rabin/qmd) -- a search engine that indexes agent outputs for cross-team retrieval. BM25 + vector + rerank. no GPU required.
+
+### setup
+
+```bash
+pip install qmd
+qmd init
+qmd serve                    # runs on http://localhost:8181
+```
+
+### connect to swarma
+
+in your instance `config.yaml`, set the knowledge engine:
+
+```yaml
+knowledge:
+  engine: qmd
+  qmd_endpoint: http://localhost:8181/mcp
+```
+
+once connected, every agent output gets indexed automatically. agents can search what other agents learned -- the experiment loop gets a shared memory layer across teams.
+
+without QMD, swarma falls back to local SQLite search (metadata only, no semantic search). with QMD, you get full-text + vector search across all agent outputs, strategies, and experiment results.
+
 ## Pitfalls
 
 - swarma needs an OpenRouter API key in `~/.swarma/instances/default/.env`
 - First run creates the SQLite database -- subsequent queries require at least one completed cycle
 - Strategy files only start evolving after `min_sample_size` experiments (default: 3-5)
 - Self-eval is the default measurement -- good for prototyping, wire in real signals for production
+- QMD needs to be running (`qmd serve`) before starting swarma if you want semantic search
 
 ## Verification
 

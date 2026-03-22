@@ -27,10 +27,11 @@ dependencies = [
     "typer>=0.12",
     "rich>=13.0",
     "python-dotenv>=1.0",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
 ]
 
 [project.optional-dependencies]
-dashboard = ["fastapi>=0.110", "uvicorn>=0.29"]
 dev = ["pytest", "pytest-asyncio", "ruff"]
 
 [project.scripts]

@@ -1,7 +1,6 @@
 id: strategist
 name: Distribution Strategist
 model:
-  model_id: anthropic/claude-sonnet-4-6
   max_tokens: 1500
   temperature: 0.5
 instructions: |

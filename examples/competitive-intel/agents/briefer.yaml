@@ -1,7 +1,6 @@
 id: briefer
 name: Intel Briefer
 model:
-  model_id: mistralai/mistral-nemo
   max_tokens: 800
   temperature: 0.3
 instructions: |

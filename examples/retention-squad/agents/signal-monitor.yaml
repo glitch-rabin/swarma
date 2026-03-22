@@ -1,7 +1,6 @@
 id: signal-monitor
 name: Churn Signal Monitor
 model:
-  model_id: mistralai/mistral-nemo
   max_tokens: 1000
   temperature: 0.2
 instructions: |

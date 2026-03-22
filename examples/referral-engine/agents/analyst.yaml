@@ -1,7 +1,6 @@
 id: analyst
 name: Referral Analyst
 model:
-  model_id: deepseek/deepseek-r1
   max_tokens: 1500
   temperature: 0.3
 instructions: |

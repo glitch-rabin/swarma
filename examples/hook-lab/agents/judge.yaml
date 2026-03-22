@@ -1,7 +1,6 @@
 id: judge
 name: Hook Judge
 model:
-  model_id: mistralai/mistral-nemo
   max_tokens: 500
   temperature: 0.2
 instructions: |

@@ -1,7 +1,6 @@
 id: copywriter
 name: Outbound Copywriter
 model:
-  model_id: qwen/qwen3.5-plus-02-15
   max_tokens: 800
   temperature: 0.6
 instructions: |

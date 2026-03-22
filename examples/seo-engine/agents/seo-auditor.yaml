@@ -1,7 +1,6 @@
 id: seo-auditor
 name: SEO Auditor
 model:
-  model_id: mistralai/mistral-nemo
   max_tokens: 800
   temperature: 0.2
 instructions: |

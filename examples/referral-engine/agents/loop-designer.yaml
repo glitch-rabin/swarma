@@ -1,7 +1,6 @@
 id: loop-designer
 name: Viral Loop Designer
 model:
-  model_id: qwen/qwen3.5-plus-02-15
   max_tokens: 1500
   temperature: 0.6
 instructions: |

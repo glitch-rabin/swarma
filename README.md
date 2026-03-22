@@ -152,6 +152,28 @@ swarma cycle hook-lab
 
 each squad includes a `program.md` with real experiment patterns and metric guidance.
 
+## knowledge layer (QMD)
+
+agents learn individually via strategy.md. to learn *across* teams, add [QMD](https://github.com/glitch-rabin/qmd) -- a search engine that indexes all agent outputs. BM25 + vector + rerank. no GPU required.
+
+```bash
+pip install qmd
+qmd init
+qmd serve                          # http://localhost:8181
+```
+
+then in your instance `config.yaml`:
+
+```yaml
+knowledge:
+  engine: qmd
+  qmd_endpoint: http://localhost:8181/mcp
+```
+
+every agent output gets indexed automatically. agents search what other agents learned. the experiment loop gets shared memory.
+
+without QMD, swarma uses local SQLite (metadata only). with QMD, full semantic search across all outputs, strategies, and results.
+
 ## what swarma is not
 
 - **not memory** -- [honcho](https://github.com/plastic-labs/honcho) does memory. swarma does learning loops.

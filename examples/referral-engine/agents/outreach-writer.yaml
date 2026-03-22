@@ -1,7 +1,6 @@
 id: outreach-writer
 name: Referral Copy Writer
 model:
-  model_id: qwen/qwen3.5-plus-02-15
   max_tokens: 800
   temperature: 0.7
 instructions: |
