@@ -139,7 +139,6 @@ Once connected, you get these tools:
 | `list_outputs` | Recent outputs from agents |
 | `approve_plan` | Approve a pending experiment plan |
 | `reject_plan` | Reject a pending plan |
-| `push_metric` | Push external metric data into the loop |
 
 ## Typical Workflow
 
@@ -149,7 +148,6 @@ Once swarma is running and connected:
 2. **Check progress**: `get_status` or `list_experiments` to see what's running
 3. **Read learnings**: `get_playbook` to see validated patterns across all teams
 4. **Approve plans**: review and approve/reject proposed experiments
-5. **Push real data**: `push_metric` to feed real analytics back into the loop
 
 ## Key Concept
 

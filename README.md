@@ -8,9 +8,9 @@ the experiment loop for AI agent teams.
 ![Python](https://img.shields.io/badge/python-3.11+-green)
 ![License](https://img.shields.io/badge/license-MIT-yellow)
 
-your agents run tasks. do they learn from them?
+experiment tracking for AI agent teams. run A/B tests on your agents, track what works, evolve your playbooks automatically.
 
-swarma adds a persistent learning loop to any AI agent. each agent gets one metric, one editable strategy file, and a feedback cycle that evolves based on measured results. the playbook writes itself.
+you define the hypotheses and metrics. swarma handles the loop: run experiments, score results, issue verdicts, update strategies. after enough cycles, you have a validated playbook of what actually works.
 
 not memory. not automation. not orchestration. just:
 
@@ -50,11 +50,15 @@ swarma serve --mcp             # stdio transport (for Hermes, Claude Code, etc.)
 
 1. agent reads its `strategy.md` before every run
 2. produces output (content, research, analysis -- whatever the team does)
-3. scores the output against its metric
-4. logs to `results.tsv`
-5. after enough samples, issues a verdict: **keep**, **discard**, or **inconclusive**
-6. updates `strategy.md` with what it learned
+3. a cheap LLM scores the output against the agent's metric (1-10 scale, forced decimals)
+4. score + reasoning logged to `results.tsv`
+5. after `min_sample_size` cycles (default 3-5), verdict is issued automatically
+6. `strategy.md` updated with what was learned
 7. next cycle uses the evolved strategy
+
+**scoring**: each output gets evaluated by a separate LLM call using the cheapest model in your routing table. the evaluator sees the output, the current strategy, the last 5 scores, and the metric definition. it returns a precise score (7.3, not 7) plus a reasoning sentence and strategy suggestion. self-eval by default -- good for prototyping. wire in real signals for production.
+
+**verdicts**: after enough samples, swarma compares the experiment average against baseline. >20% improvement = **keep** (pattern validated, strategy updated). >20% decline = **discard** (reverted). in between = **inconclusive** (logged, try again with more data).
 
 **strategy.md** after a few experiments:
 ```markdown
