@@ -383,14 +383,17 @@ class MCPServer:
     async def run_stdio(self):
         """Run MCP server over stdio (for MCP client integration)."""
         logger.info("swarma MCP server starting (stdio)")
+
+        loop = asyncio.get_event_loop()
+
+        # Set up async stdin reader
         reader = asyncio.StreamReader()
         protocol = asyncio.StreamReaderProtocol(reader)
-        await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin.buffer)
+        await loop.connect_read_pipe(lambda: protocol, sys.stdin.buffer)
 
-        writer_transport, writer_protocol = await asyncio.get_event_loop().connect_write_pipe(
-            asyncio.streams.FlowControlMixin, sys.stdout.buffer
-        )
-        writer = asyncio.StreamWriter(writer_transport, writer_protocol, reader, asyncio.get_event_loop())
+        # Use direct stdout writes instead of connect_write_pipe
+        # (more robust across different invocation contexts)
+        stdout = sys.stdout.buffer
 
         while True:
             try:
@@ -407,8 +410,8 @@ class MCPServer:
 
                 if response is not None:
                     out = json.dumps(response) + "\n"
-                    writer.write(out.encode())
-                    await writer.drain()
+                    stdout.write(out.encode())
+                    stdout.flush()
 
             except json.JSONDecodeError as e:
                 logger.warning("invalid JSON: %s", e)
