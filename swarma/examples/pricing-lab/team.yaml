@@ -1,0 +1,6 @@
+name: Pricing Lab
+goal: find the price point and packaging that maximizes revenue per visitor.
+flow: "researcher -> analyst -> page-writer"
+schedule: "0 10 * * 2,5"   # tue/fri 10am
+budget_monthly: 20.0
+tools: []

@@ -396,7 +396,7 @@
       for (const exp of experiments) {
         html += `
           <tr>
-            <td>${truncate(exp.hypothesis || '-', 80)}</td>
+            <td>${truncate(escapeHtml(exp.hypothesis) || '-', 80)}</td>
             <td>${verdictTag(exp.verdict || exp.status || 'pending')}</td>
             <td>${exp.metric_name || '-'}</td>
             <td>${exp.sample_size || '-'}</td>

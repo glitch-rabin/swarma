@@ -1,0 +1,6 @@
+name: Community Engine
+goal: build and grow engaged communities with measurable DAU/MAU >20% through gamification, quests, and cross-platform loops.
+flow: "engagement-manager -> content-curator -> analyst"
+schedule: "0 9 * * *"   # daily 9am
+budget_monthly: 20.0
+tools: []

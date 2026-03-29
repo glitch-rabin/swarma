@@ -12,7 +12,7 @@ Quick start:
     result = await engine.run_cycle("content")
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from .core.agent import Agent
 from .core.config import AgentConfig, InstanceConfig, TeamConfig, load_all_teams

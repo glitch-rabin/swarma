@@ -81,6 +81,9 @@ def parse_flow(flow_str: str) -> Flow:
 
     raw = flow_str.strip()
 
+    # Normalize arrow spacing: "a->b", "a ->b", "a-> b" all become "a -> b"
+    raw = re.sub(r"\s*->\s*", " -> ", raw)
+
     # Split on " -> " (the arrow separator)
     # But we need to handle brackets, so we can't just split naively
     steps = []

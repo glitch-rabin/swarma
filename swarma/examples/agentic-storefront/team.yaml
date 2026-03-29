@@ -1,0 +1,6 @@
+name: Agentic Storefront
+goal: optimize e-commerce for AI agent discovery and conversion -- Shopify UCP, dynamic pricing, conversational commerce.
+flow: "merchandiser -> copywriter -> analyst"
+schedule: "0 8 * * 1,3,5"   # Mon/Wed/Fri 8am
+budget_monthly: 20.0
+tools: []

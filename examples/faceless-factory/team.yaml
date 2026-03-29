@@ -1,0 +1,6 @@
+name: Faceless Factory
+goal: produce high-retention faceless short-form videos at scale -- optimize for AVD and CTR, not just volume.
+flow: "script-writer -> thumbnail-designer -> analytics"
+schedule: "0 7 * * 1-5"   # weekdays 7am
+budget_monthly: 25.0
+tools: []

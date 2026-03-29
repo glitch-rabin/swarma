@@ -330,7 +330,8 @@
 
     function truncate(str, len) {
       if (!str) return '-';
-      return str.length > len ? str.substring(0, len) + '...' : str;
+      const safe = escapeHtml(str);
+      return safe.length > len ? safe.substring(0, len) + '...' : safe;
     }
 
     // ---- Init ----

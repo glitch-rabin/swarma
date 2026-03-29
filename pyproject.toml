@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "swarma"
-version = "0.1.0"
+version = "0.2.0"
 description = "Learning agent swarms that get smarter every cycle"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [
-    { name = "Rabin", email = "rabin@theglitch.ai" },
+    { name = "swarma contributors" },
 ]
 keywords = ["agents", "swarm", "llm", "orchestration", "ai"]
 classifiers = [
@@ -39,6 +39,10 @@ swarma = "swarma.cli.main:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["swarma"]
+artifacts = ["swarma/examples/**/*.yaml", "swarma/examples/**/*.md"]
+
+[tool.hatch.build.targets.sdist]
+include = ["swarma/", "examples/", "README.md", "LICENSE", "SKILL.md"]
 
 [tool.ruff]
 target-version = "py311"

@@ -1,0 +1,6 @@
+name: Ad Creative Lab
+goal: generate and test ad creatives at 10-100x human volume -- find winners faster through systematic variant testing.
+flow: "creative-strategist -> copywriter -> analyst"
+schedule: "0 9 * * 1-5"   # weekdays 9am
+budget_monthly: 30.0
+tools: []

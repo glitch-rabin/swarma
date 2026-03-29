@@ -18,36 +18,42 @@ DEFAULT_ROUTING = {
     "routing": {
         "model": "mistralai/mistral-nemo",
         "cost_per_m_input": 0.02,
+        "cost_per_m_output": 0.02,
         "max_tokens": 500,
         "temperature": 0.3,
     },
     "creative_writing": {
         "model": "qwen/qwen3.5-plus-02-15",
         "cost_per_m_input": 0.26,
+        "cost_per_m_output": 0.26,
         "max_tokens": 2000,
         "temperature": 0.7,
     },
     "research_summary": {
         "model": "qwen/qwen-2.5-72b-instruct",
         "cost_per_m_input": 0.10,
+        "cost_per_m_output": 0.30,
         "max_tokens": 4000,
         "temperature": 0.5,
     },
     "strategic_reasoning": {
         "model": "deepseek/deepseek-r1",
         "cost_per_m_input": 0.55,
+        "cost_per_m_output": 2.19,
         "max_tokens": 4000,
         "temperature": 0.6,
     },
     "hard_decisions": {
         "model": "anthropic/claude-sonnet-4-6",
         "cost_per_m_input": 3.00,
+        "cost_per_m_output": 15.00,
         "max_tokens": 4000,
         "temperature": 0.5,
     },
     "deep_research": {
         "model": "perplexity/sonar-deep-research",
         "cost_per_m_input": None,
+        "cost_per_m_output": None,
         "max_tokens": 8000,
         "temperature": 0.5,
     },
@@ -137,16 +143,17 @@ class ModelRouter:
         response.raise_for_status()
         data = response.json()
 
-        content = data["choices"][0]["message"]["content"]
+        content = data["choices"][0]["message"].get("content") or ""
         usage = data.get("usage", {})
         input_tokens = usage.get("prompt_tokens", 0)
         output_tokens = usage.get("completion_tokens", 0)
 
-        # Estimate cost
+        # Estimate cost using per-token rates
         cost = 0.0
         if route and route.get("cost_per_m_input"):
+            output_rate = route.get("cost_per_m_output") or route["cost_per_m_input"]
             cost = (input_tokens * route["cost_per_m_input"] / 1_000_000) + \
-                   (output_tokens * route["cost_per_m_input"] * 1.5 / 1_000_000)
+                   (output_tokens * output_rate / 1_000_000)
         self._total_cost += cost
 
         logger.info(

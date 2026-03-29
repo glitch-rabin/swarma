@@ -1,0 +1,6 @@
+name: Channel Mix
+goal: find which channels amplify which messages. same content everywhere is lazy -- test what works where.
+flow: "strategist -> [linkedin-writer, twitter-writer, email-writer]"
+schedule: "0 9 * * 1-5"   # weekdays 9am
+budget_monthly: 40.0
+tools: []

@@ -1,0 +1,6 @@
+name: Programmatic SEO
+goal: generate thousands of data-backed pages targeting long-tail queries -- with quality gates that prevent thin content penalties.
+flow: "keyword-researcher -> template-builder -> quality-checker"
+schedule: "0 6 * * 1,4"   # Monday and Thursday 6am
+budget_monthly: 20.0
+tools: []

@@ -1,0 +1,6 @@
+name: UGC Factory
+goal: produce AI-generated UGC-style ad content at $2-20/video that performs within 80% of human creator content on ROAS.
+flow: "script-writer -> reviewer -> performance-tracker"
+schedule: "0 10 * * 1-5"   # weekdays 10am
+budget_monthly: 25.0
+tools: []

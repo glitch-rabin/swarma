@@ -1004,7 +1004,7 @@
     }
 
     // ---- Test connection ----
-    function testConnection() {
+    async function testConnection() {
       const key = document.getElementById('api-key').value.trim();
       if (!key) return;
 
@@ -1017,36 +1017,41 @@
       msg.textContent = 'testing connection...';
       msg.style.color = 'var(--turmeric)';
 
-      // Simulate test -- in real impl this hits OpenRouter /models
-      setTimeout(() => {
-        if (key.startsWith('sk-or-')) {
+      if (!key.startsWith('sk-or-')) {
+        dot.className = 'test-dot err';
+        msg.textContent = 'invalid key format. should start with sk-or-';
+        msg.style.color = 'var(--red-hot)';
+        return;
+      }
+
+      try {
+        const resp = await fetch('https://openrouter.ai/api/v1/models', {
+          headers: { 'Authorization': 'Bearer ' + key },
+        });
+        if (resp.ok) {
           dot.className = 'test-dot ok';
           msg.textContent = 'connected to openrouter. models available.';
           msg.style.color = 'var(--green)';
           connectionTested = true;
-
-          // Update review
           const reviewStatus = document.getElementById('review-api-status');
           const reviewCheck = document.getElementById('review-api-check');
-          if (reviewStatus) {
-            reviewStatus.textContent = 'connected';
-            reviewStatus.style.color = 'var(--green)';
-          }
-          if (reviewCheck) {
-            reviewCheck.textContent = '+';
-            reviewCheck.className = 'review-check check-ok';
-          }
+          if (reviewStatus) { reviewStatus.textContent = 'connected'; reviewStatus.style.color = 'var(--green)'; }
+          if (reviewCheck) { reviewCheck.textContent = '+'; reviewCheck.className = 'review-check check-ok'; }
         } else {
           dot.className = 'test-dot err';
-          msg.textContent = 'invalid key format. should start with sk-or-';
+          msg.textContent = 'key rejected by openrouter (' + resp.status + ')';
           msg.style.color = 'var(--red-hot)';
         }
-        generateConfig();
-      }, 1200);
+      } catch (e) {
+        dot.className = 'test-dot err';
+        msg.textContent = 'connection failed: ' + e.message;
+        msg.style.color = 'var(--red-hot)';
+      }
+      generateConfig();
     }
 
-    function testHermes() {
-      const url = document.getElementById('hermes-url').value.trim();
+    async function testHermes() {
+      const url = (document.getElementById('hermes-url')?.value || '').trim();
       const result = document.getElementById('hermes-test-result');
       const dot = document.getElementById('hermes-test-dot');
       const msg = document.getElementById('hermes-test-msg');
@@ -1056,25 +1061,68 @@
       msg.textContent = 'pinging hermes gateway...';
       msg.style.color = 'var(--turmeric)';
 
-      setTimeout(() => {
-        dot.className = 'test-dot ok';
-        msg.textContent = 'hermes gateway reachable. qmd memory available.';
-        msg.style.color = 'var(--green)';
-      }, 1500);
+      try {
+        const resp = await fetch(url + '/health', { signal: AbortSignal.timeout(5000) });
+        if (resp.ok) {
+          dot.className = 'test-dot ok';
+          msg.textContent = 'hermes gateway reachable.';
+          msg.style.color = 'var(--green)';
+        } else {
+          dot.className = 'test-dot err';
+          msg.textContent = 'hermes responded with ' + resp.status;
+          msg.style.color = 'var(--red-hot)';
+        }
+      } catch (e) {
+        dot.className = 'test-dot err';
+        msg.textContent = 'could not reach hermes: ' + e.message;
+        msg.style.color = 'var(--red-hot)';
+      }
     }
 
     // ---- Launch ----
-    function launchSwarm() {
+    async function launchSwarm() {
       const btn = document.getElementById('launch-btn');
       btn.textContent = 'deploying...';
       btn.disabled = true;
 
-      setTimeout(() => {
+      const name = document.getElementById('swarm-name').value.trim() || 'my-swarm';
+      const goal = document.getElementById('swarm-goal').value.trim() || '';
+      const hypothesis = document.getElementById('first-mission').value.trim() || '';
+      const apiKey = document.getElementById('api-key').value.trim() || '';
+      const agents = getAgents();
+      const tpl = TEMPLATES[selectedTemplate];
+      const flow = tpl.flow || agents.map(a => a.id).join(' -> ');
+      const hermesUrl = document.getElementById('hermes-url')?.value?.trim() || '';
+
+      try {
+        const resp = await fetch(window.location.origin + '/setup/deploy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            goal: goal,
+            template: selectedTemplate,
+            harness: selectedHarness,
+            agents: agents,
+            flow: flow,
+            hypothesis: hypothesis,
+            api_key: apiKey,
+            harness_url: hermesUrl,
+          }),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+          throw new Error(err.detail || 'deploy failed');
+        }
+
         btn.textContent = 'launched!';
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1000);
-      }, 2000);
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
+      } catch (e) {
+        btn.textContent = 'launch swarm';
+        btn.disabled = false;
+        alert('Deploy failed: ' + e.message);
+      }
     }
 
     // ---- Init ----

@@ -32,6 +32,24 @@ class ToolConfig:
     rate_limit: Optional[str] = None
 
 
+class _MCPPlaceholderTool(Tool):
+    """Placeholder for MCP tools. Execution is handled by the adapter layer."""
+
+    def __init__(self, name: str, description: str, endpoint: str = ""):
+        self.name = name
+        self.description = description
+        self.endpoint = endpoint
+
+    def get_definition(self) -> ToolDefinition:
+        return ToolDefinition(name=self.name, description=self.description)
+
+    async def execute(self, **kwargs) -> ToolResult:
+        return ToolResult(
+            content="", success=False,
+            error=f"MCP tool '{self.name}' must be called via adapter, not directly",
+        )
+
+
 class ToolRegistry:
     """Manages tools across all three layers."""
 
@@ -72,10 +90,14 @@ class ToolRegistry:
                 params_schema=config.params_schema,
             )
         elif config.type == "mcp":
-            # MCP tools are handled separately (via adapter)
-            # Store config but don't create a Tool object
+            # MCP tools are executed via adapters. Create a placeholder so the
+            # registry knows this tool exists (for grants and definitions).
             logger.info("MCP tool registered: %s (endpoint: %s)", config.name, config.endpoint)
-            return None
+            tool = _MCPPlaceholderTool(
+                name=config.name,
+                description=config.description or f"MCP tool: {config.name}",
+                endpoint=config.endpoint or "",
+            )
         else:
             raise ValueError(f"Unknown tool type: {config.type}")
 

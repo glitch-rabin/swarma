@@ -109,8 +109,9 @@ class ExperimentEngine:
 
         avg_metric = sum(r.metric_value for r in results) / len(results)
 
-        if experiment.baseline is None:
-            return "keep"
+        if experiment.baseline is None or experiment.baseline == 0:
+            # No baseline or zero baseline -- can't compute relative improvement
+            return "keep" if experiment.baseline is None else "inconclusive"
 
         improvement = (avg_metric - experiment.baseline) / experiment.baseline
 

@@ -1,0 +1,6 @@
+name: Referral Engine
+goal: turn users into recruiters. the best acquisition channel is the product itself.
+flow: "analyst -> loop-designer -> outreach-writer"
+schedule: "0 11 * * 2,4"   # tue/thu 11am
+budget_monthly: 20.0
+tools: []

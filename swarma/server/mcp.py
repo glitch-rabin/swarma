@@ -141,6 +141,36 @@ TOOLS = [
             "required": ["expert_id"],
         },
     },
+    {
+        "name": "swarma_generate_team",
+        "description": "Generate a complete team from a goal description. Describe what you want to improve and get a working team with agents, flow, program, and first experiment.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "intent": {
+                    "type": "string",
+                    "description": "What do you want to improve? e.g. 'LinkedIn engagement', 'cold outreach conversion', 'SEO rankings'",
+                },
+                "context": {
+                    "type": "string",
+                    "description": "Business context: what you do, who your audience is, what you've tried",
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Optional team name (auto-generated if empty)",
+                },
+                "budget": {
+                    "type": "number",
+                    "description": "Monthly budget in USD (default 30)",
+                },
+                "schedule": {
+                    "type": "string",
+                    "description": "Cron schedule (empty = manual trigger)",
+                },
+            },
+            "required": ["intent"],
+        },
+    },
 ]
 
 
@@ -165,6 +195,7 @@ class MCPServer:
             "swarma_list_tools": self._handle_list_tools,
             "swarma_list_experts": self._handle_list_experts,
             "swarma_get_expert": self._handle_get_expert,
+            "swarma_generate_team": self._handle_generate_team,
         }
 
     def _require_engine(self):
@@ -184,7 +215,7 @@ class MCPServer:
             return self._rpc_response(msg_id, {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {"tools": {"listChanged": False}},
-                "serverInfo": {"name": "swarma", "version": "0.1.0"},
+                "serverInfo": {"name": "swarma", "version": "0.2.0"},
             })
 
         if method == "notifications/initialized":
@@ -378,6 +409,40 @@ class MCPServer:
             "frameworks": len(expert.frameworks),
         }
 
+    async def _handle_generate_team(self, args: dict) -> dict:
+        eng = self._require_engine()
+        from ..core.generator import generate_team
+        from pathlib import Path
+
+        instance_path = Path(eng.state.db_path).parent
+        result = await generate_team(
+            intent=args["intent"],
+            router=eng.router,
+            instance_path=instance_path,
+            context=args.get("context", ""),
+            name=args.get("name", ""),
+            budget=args.get("budget", 30.0),
+            schedule=args.get("schedule", ""),
+        )
+
+        # Reload teams and create a runner so the new team is immediately runnable
+        from ..core.config import TeamConfig
+        from ..core.cycle import CycleRunner
+        team_dir = result["team_dir"]
+        new_team = TeamConfig.from_directory(team_dir)
+        eng.teams[new_team.id] = new_team
+        eng._runners[new_team.id] = CycleRunner(
+            team=new_team,
+            router=eng.router,
+            state=eng.state,
+            knowledge=eng.knowledge,
+            tool_registry=eng.tool_registry,
+            adapter_registry=eng.adapter_registry,
+            expert_catalog=eng.expert_catalog,
+        )
+
+        return result
+
     # --- Transport: stdio ---
 
     async def run_stdio(self):
@@ -427,7 +492,7 @@ class MCPServer:
         from fastapi.responses import JSONResponse
         import uvicorn
 
-        http_app = FastAPI(title="swarma MCP", version="0.1.0")
+        http_app = FastAPI(title="swarma MCP", version="0.2.0")
 
         @http_app.post("/mcp")
         async def mcp_endpoint(request: Request):

@@ -1,6 +1,6 @@
 # swarma
 
-the growth experiment loop for AI agents & swarms.
+growth loops, automated.
 
 **[swarma.dev](https://swarma.dev)**
 
@@ -8,52 +8,93 @@ the growth experiment loop for AI agents & swarms.
 
 ---
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
+<p align="center">
+  <img src="brand/scenes/v2/05-van-studio.png" alt="swarma — growth loops, automated" width="100%">
+</p>
+
+![Version](https://img.shields.io/badge/version-0.2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.11+-green)
 ![License](https://img.shields.io/badge/license-MIT-yellow)
+![PyPI](https://img.shields.io/pypi/v/swarma)
 
-your agents run tasks. swarma makes them run A/B tests instead.
+your agents run tasks. swarma makes them run growth experiments instead.
 
-define a hypothesis and a metric. swarma handles the loop: run experiments, score results, issue verdicts, update strategies. after enough cycles, you have a validated playbook of what actually works -- not what you assumed would work.
+describe what you want to improve. swarma generates the team, seeds it with real growth knowledge, runs experiments, scores results, issues verdicts, and evolves the strategy. after enough cycles, you have a validated playbook of what actually works.
+
+one folder = one team. one cycle = one experiment. the playbook writes itself.
+
+## the GROWS loop
+
+every cycle follows GROWS -- five steps, no exceptions:
 
 ```
-strategy.md → execute → measure → verdict → updated strategy.md
-     ↑                                              |
-     └──────────────────────────────────────────────┘
+  Generate       Run         Observe       Weigh        Stack
+ hypothesis --> experiment --> signal --> verdict --> playbook
+     ^                                                  |
+     └──────────────────────────────────────────────────┘
 ```
 
-applied learnings from [QMD](https://github.com/glitch-rabin/qmd) and the [karpathy autoresearch pattern](https://github.com/karpathy/autoresearch) -- the same experiment loop that growth teams run, now applied to AI agent swarms.
+| Step | What happens |
+|------|-------------|
+| **G -- Generate** | Agent reads its `strategy.md`, proposes a hypothesis. "contrarian opening lines will outperform data-led hooks on saves." |
+| **R -- Run** | Agent executes with the hypothesis active. Produces output -- research, copy, analysis, whatever the team does. |
+| **O -- Observe** | A separate LLM scores the output against the agent's target metric (1-10 scale, forced decimals). Score + reasoning logged to `results.tsv`. |
+| **W -- Weigh** | After `min_sample_size` cycles (default 3-5), swarma compares experiment average against baseline. >20% up = **keep**. >20% down = **discard**. In between = **inconclusive**. |
+| **S -- Stack** | Validated patterns get written back to `strategy.md` and pushed to the shared playbook. Next cycle generates a new hypothesis from the evolved strategy. |
 
-## why this exists
-
-every growth team at Uber, Spotify, Facebook, Airbnb runs the same loop: hypothesize, test, measure, learn, repeat. the ones that win aren't smarter -- they just run more experiments and actually listen to the data. the playbook that emerges after thousands of cycles is the real asset. not the team, not the tools, not the clever ideas. the compounded learnings.
-
-the bottleneck was always human bandwidth. even the best growth teams max out at 2-5 experiments per week. you need people to design the test, run it, wait for results, analyze, write up learnings, update the playbook. most teams skip half those steps because there aren't enough hours.
-
-after 10 years building and scaling these teams, the pattern is obvious: the loop works. the constraint is how many times you can run it. AI agents remove that constraint entirely. a swarm can run 50 experiments while a human team runs 2. but only if something is actually closing the loop -- scoring results, issuing verdicts, evolving the strategy.
-
-that's what swarma does. the experiment infrastructure that growth teams at scale take for granted, packaged so any agent swarm can use it. same loop, same rigor, same compounding. unlimited cycles. no 50-person team required.
+this is the same loop every growth team at Uber, Spotify, and Airbnb runs. the teams that win aren't smarter -- they run more experiments and listen to the data. swarma removes the human bandwidth bottleneck. a swarm runs 50 experiments while a human team runs 2.
 
 ## quickstart
 
 ```bash
+pip install swarma
+```
+
+or from source:
+
+```bash
 git clone https://github.com/glitch-rabin/swarma.git
-cd swarma
-pip install -e .
+cd swarma && pip install -e .
 ```
 
 ```bash
-swarma init                    # creates instance + starter team
-swarma cycle starter           # run one cycle, see it work
-swarma status                  # costs, runs, experiments
+swarma init                                        # creates instance + starter team
+swarma cycle starter --topic "why do startups fail?"   # run one cycle
+swarma status                                      # costs, runs, experiments
 ```
 
 python 3.11+ and an [openrouter](https://openrouter.ai/) API key. no GPU, no postgres, no docker. runs on a laptop or a $5 VPS.
 
-## how the loop works
+## generate a team from a goal
+
+don't configure agents by hand. describe what you want and swarma builds the team.
+
+```bash
+swarma team create my-growth --from-goal "improve landing page conversion rate"
+```
+
+this calls an LLM to design a team with the right agents, flow, models, and a first experiment hypothesis. the generated team comes with:
+
+- `team.yaml` -- goal, flow, budget
+- `agents/*.yaml` -- individual agent configs with specific instructions
+- `program.md` -- experiment patterns and constraints
+- a first experiment ready to run
+
+add business context for better results:
+
+```bash
+swarma team create growth-lab \
+  --from-goal "optimize our signup funnel" \
+  --context "B2B SaaS, 500 free users, 2% conversion to paid" \
+  --budget 50
+```
+
+## how the loop works (detailed)
+
+the GROWS loop in practice:
 
 1. agent reads its `strategy.md` before every run
-2. produces output (content, research, analysis -- whatever the team does)
+2. produces output (research, copy, analysis -- whatever the team does)
 3. a cheap LLM scores the output against the agent's metric (1-10 scale, forced decimals)
 4. score + reasoning logged to `results.tsv`
 5. after `min_sample_size` cycles (default 3-5), verdict is issued automatically
@@ -64,7 +105,7 @@ python 3.11+ and an [openrouter](https://openrouter.ai/) API key. no GPU, no pos
 
 **verdicts**: after enough samples, swarma compares the experiment average against baseline. >20% improvement = **keep** (pattern validated, strategy updated). >20% decline = **discard** (reverted). in between = **inconclusive** (logged, try again with more data).
 
-after a few experiments, your `strategy.md` looks like this:
+after a few experiments, your `strategy.md` evolves from seed knowledge into validated patterns:
 
 ```markdown
 ## Validated (Exp 5)
@@ -76,7 +117,49 @@ story-led hooks vs data-led hooks -- no significant difference (avg=8.1 vs basel
 > next: increase sample size, results may be noise
 ```
 
-the playbook grows. the team gets smarter. you don't touch anything.
+## feed real metrics back
+
+LLM self-eval is a starting proxy. for production, feed back real-world signals:
+
+```bash
+# log a single metric
+swarma metric log hook-lab copywriter 4.2 --metric ctr_pct
+
+# attach to a specific experiment
+swarma metric log hook-lab copywriter 127 --metric impressions --exp 3
+
+# bulk import from CSV
+swarma metric import hook-lab metrics.csv
+
+# view logged metrics
+swarma metric show hook-lab
+```
+
+CSV format: `agent,value,metric_name,note`
+
+metrics auto-attach to the agent's active experiment. the experiment loop uses external metrics alongside LLM scores when both are available.
+
+## pre-seeded strategies
+
+agents don't start from zero. each squad includes a `strategy.md` seeded with real growth knowledge -- validated patterns, anti-patterns, and hypotheses to test. the GROWS loop refines these over time.
+
+example from the hook-lab strategy:
+
+```markdown
+### Validated Patterns
+
+**Specificity wins**
+- Hooks with specific numbers outperform vague claims by 2-3x on saves
+- "47% of startups" > "most startups"
+
+**Loss framing > gain framing**
+- "You're losing $X/month" outperforms "You could save $X/month" on CTR
+- Exception: aspirational audiences respond better to gain framing
+
+### Patterns to Test
+- [ ] First-person confession vs third-person case study
+- [ ] Time-anchored ("In 2024...") vs timeless hooks
+```
 
 ## teams as config
 
@@ -88,7 +171,8 @@ teams/my-squad/
 ├── program.md         # team context and constraints
 └── agents/
     ├── researcher.yaml
-    └── writer.yaml
+    ├── writer.yaml
+    └── strategy.md    # pre-seeded growth knowledge
 ```
 
 ```yaml
@@ -118,35 +202,78 @@ models, tools, and expert lenses are configured in `config.yaml`. agents inherit
 
 flow DSL supports sequential (`a -> b`), parallel (`a -> [b, c, d]`), and mixed pipelines.
 
-## 10 example squads
+## 18 squad templates
 
-ready-to-use squads in [`examples/`](examples/). copy one into your instance and run it:
+ready-to-use squads in [`examples/`](examples/), each with pre-seeded strategies:
 
 ```bash
 cp -r examples/hook-lab ~/.swarma/instances/default/teams/
 swarma cycle hook-lab
 ```
 
-| squad | what it tests |
-|-------|--------------|
-| `hook-lab` | opening lines -- what stops the scroll |
-| `format-wars` | carousel vs text vs thread vs image |
-| `voice-finder` | tone variations until engagement peaks |
-| `cta-optimizer` | call-to-action placement and phrasing |
-| `topic-radar` | which subjects your audience actually cares about |
-| `timing-lab` | posting time and frequency experiments |
-| `repurpose-engine` | how to recycle top performers across platforms |
-| `thread-lab` | thread structure and hook patterns |
-| `newsletter-lab` | subject lines, send times, format |
-| `defi-alpha` | research depth vs speed for crypto content |
+**core growth squads:**
 
-each includes a `program.md` with real experiment patterns and metric guidance.
+| squad | AARRR stage | what it tests | agents |
+|-------|------------|--------------|--------|
+| `hook-lab` | acquisition | opening lines -- what stops the scroll | 3 |
+| `landing-lab` | acquisition | landing page copy and structure | 3 |
+| `seo-engine` | acquisition | search presence and content ranking | 3 |
+| `cold-outbound` | acquisition | outreach messaging and sequences | 3 |
+| `channel-mix` | acquisition | multi-platform content strategy | 3 |
+| `activation-flow` | activation | signup-to-value onboarding flows | 3 |
+| `pricing-lab` | revenue | pricing presentation and packaging | 3 |
+| `retention-squad` | retention | churn signals and win-back patterns | 3 |
+| `referral-engine` | referral | viral loops and invite mechanics | 3 |
+| `competitive-intel` | -- | market monitoring and positioning | 3 |
 
-## integrations
+**2026 growth ops squads:**
 
-### hermes agent
+| squad | what it tests | agents |
+|-------|--------------|--------|
+| `faceless-factory` | automated short-form video pipeline | 3 |
+| `ad-creative-lab` | performance creative testing at scale | 3 |
+| `ugc-factory` | user-generated content simulation | 3 |
+| `programmatic-seo` | automated SEO content at scale | 3 |
+| `newsletter-engine` | newsletter growth + retention | 3 |
+| `acquisition-squad` | paid + organic acquisition loops | 3 |
+| `community-engine` | community-led growth automation | 3 |
+| `agentic-storefront` | AI-powered commerce optimization | 3 |
 
-swarma exposes an MCP server. connect it to [hermes](https://github.com/nousresearch/hermes-agent) and your agent gets a dedicated experiment team that learns while it sleeps.
+each includes a `program.md` with experiment patterns and a `strategy.md` with real growth knowledge as starting baseline.
+
+## QMD knowledge layer
+
+agents learn individually via strategy.md. that's single-team learning. to learn *across* teams, wire in [QMD](https://github.com/tobi/qmd) -- a knowledge engine that indexes all agent outputs. BM25 + vector + rerank. no GPU required.
+
+```bash
+npm install -g @tobilu/qmd
+qmd init
+qmd serve                          # http://localhost:8181
+```
+
+```yaml
+# config.yaml
+knowledge:
+  engine: qmd
+  qmd_endpoint: http://localhost:8181/mcp
+```
+
+every agent output gets indexed automatically. agents search what other agents learned. the GROWS loop gets shared memory.
+
+when an experiment gets a **keep** verdict, the validated pattern is saved to a cross-team `playbook` collection. every agent sees validated patterns from every other team. anti-patterns (discarded experiments) are tracked too, so teams avoid repeating what already failed.
+
+```bash
+# semantic search across all validated patterns
+curl localhost:8282/playbook/search?q=hook+specificity
+```
+
+this is the compounding mechanism. team A discovers that loss framing beats gain framing. team B (running a different experiment entirely) sees that pattern in its context window and incorporates it. knowledge ratchets forward, never backwards.
+
+## Hermes integration
+
+swarma is designed to work with [Hermes](https://github.com/nousresearch/hermes-agent) as the operator layer. Hermes stays clean -- sets direction, approves plans, asks "what did we learn?" swarma does the messy work underneath.
+
+swarma exposes an MCP server with 22 tools. connect it and your Hermes agent gets a full growth team that runs experiments while it sleeps.
 
 ```yaml
 # hermes config.yaml
@@ -157,9 +284,9 @@ mcp_servers:
     args: ["serve", "--mcp"]
 ```
 
-hermes stays clean -- sets direction, approves plans, asks "what did we learn?" swarma does the messy work.
+the operator pattern: Hermes defines the goal and constraints. swarma generates the team, runs the GROWS loop, surfaces verdicts. Hermes reads the playbook and decides what to do next. the operator never touches the experiment infrastructure directly.
 
-### claude code / claude desktop
+### Claude Code / Claude Desktop
 
 ```json
 {
@@ -181,47 +308,54 @@ swarma serve --port 8282        # 30+ endpoints, OpenAPI docs at /docs
 ### any MCP client
 
 ```bash
-swarma serve --mcp              # stdio
-swarma serve --mcp --mcp-port 8383   # HTTP
+swarma serve --mcp                     # stdio
+swarma serve --mcp --mcp-port 8383     # HTTP
 ```
 
 **note**: when running as MCP subprocess, pass `OPENROUTER_API_KEY` in your MCP config's `env` block -- the instance `.env` is not inherited by subprocesses.
-
-## knowledge layer (QMD)
-
-agents learn individually via strategy.md. to learn *across* teams, add [QMD](https://github.com/glitch-rabin/qmd) -- a search engine that indexes all agent outputs. BM25 + vector + rerank. no GPU required.
-
-```bash
-pip install qmd
-qmd init
-qmd serve                          # http://localhost:8181
-```
-
-```yaml
-# config.yaml
-knowledge:
-  engine: qmd
-  qmd_endpoint: http://localhost:8181/mcp
-```
-
-every agent output gets indexed automatically. agents search what other agents learned. the experiment loop gets shared memory.
-
-without QMD, swarma uses local SQLite (metadata only). with QMD, full semantic search across all outputs, strategies, and results.
 
 ## what swarma is not
 
 - **not memory** -- [honcho](https://github.com/plastic-labs/honcho) does memory. swarma does learning loops.
 - **not automation** -- n8n/make do workflows. swarma runs experiments.
-- **not a prompt library** -- [agency-agents](https://github.com/msitarzewski/agency-agents) has 135 templates. swarma teaches them what works.
-- **not orchestration** -- crewai/autogen run pipelines. swarma adds the feedback loop that makes pipelines improve.
+- **not a prompt library** -- [agency-agents](https://github.com/msitarzewski/agency-agents) has 135 templates. swarma teaches them what works through feedback loops.
+- **not orchestration** -- crewai/autogen run pipelines. swarma adds the GROWS loop that makes pipelines improve.
+
+the difference: a prompt template tells an agent what to do once. swarma teaches it what works over time. templates are the starting point. the playbook is the output.
+
+## standing on
+
+swarma exists because of three ideas from three people:
+
+- **[autoresearch](https://github.com/karpathy/autoresearch)** by Andrej Karpathy -- the pattern of automated research loops where agents iteratively refine their approach. swarma applies this to growth experiments instead of research papers.
+- **[QMD](https://github.com/tobi/qmd)** by Tobi Lutke ([@tobi](https://x.com/tobi)) -- shared knowledge across agents. the insight that agents working on different problems should be able to learn from each other. swarma's cross-team playbook layer is built on this.
+- **[Hermes](https://github.com/nousresearch/hermes-agent)** by NousResearch ([@NousResearch](https://x.com/NousResearch)) -- the operator layer. the idea that an agent should be able to direct teams of specialist agents through tool use. swarma is designed as infrastructure that Hermes operates.
 
 ## roadmap
 
-- [ ] expert reasoning lenses (composable thinking frameworks)
-- [ ] dashboard UI (experiment viewer, playbook, strategy evolution)
-- [ ] external metric ingestion (webhooks, analytics callbacks)
-- [ ] squad marketplace
-- [ ] `pip install swarma` on PyPI
+**shipped:**
+
+- [x] GROWS experiment loop (generate -> run -> observe -> weigh -> stack)
+- [x] expert reasoning lenses (34 composable thinking frameworks)
+- [x] dashboard UI (experiment viewer, playbook, strategy evolution)
+- [x] team generator (`swarma team create --from-goal`)
+- [x] external metric ingestion (`swarma metric log/import/show`)
+- [x] pre-seeded strategy files with real growth knowledge
+- [x] `pip install swarma` on PyPI (v0.2.0)
+- [x] QMD cross-team wiring (verdict -> playbook -> shared knowledge)
+- [x] 18 squad templates covering full AARRR funnel + 2026 growth ops
+- [x] anti-pattern tracking (discard verdicts saved to playbook)
+- [x] `/playbook/search` semantic search across teams via QMD
+- [x] MCP server (22 tools) for Hermes / Claude Code / any client
+- [x] `--topic` flag for ad-hoc cycles
+
+**next:**
+
+- [ ] webhook metric ingestion (real-time analytics callbacks)
+- [ ] Hermes skills hub + OpenClaw marketplace publishing
+- [ ] squad marketplace (share and discover validated teams + playbooks)
+- [ ] HuggingFace dataset seeding for squad knowledge
+- [ ] observation-mode experiments (real-world signal primary, LLM eval secondary)
 
 ## contributing
 

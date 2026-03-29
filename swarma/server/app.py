@@ -57,6 +57,14 @@ class MetricPushRequest(BaseModel):
     team_id: Optional[str] = None
 
 
+class TeamGenerateRequest(BaseModel):
+    intent: str  # "what do you want to improve?"
+    context: str = ""  # business description
+    name: str = ""  # optional team name
+    budget: float = 30.0
+    schedule: str = ""
+
+
 class ExperimentCreateRequest(BaseModel):
     team_id: str
     agent_id: str = "growth-lead"
@@ -73,6 +81,18 @@ class ExperimentVerdictRequest(BaseModel):
     strategy_change: Optional[str] = None
 
 
+class SetupDeployRequest(BaseModel):
+    name: str
+    goal: str = ""
+    template: str = "custom"
+    harness: str = "standalone"
+    agents: list[dict] = []  # [{id, model}, ...]
+    flow: str = ""
+    hypothesis: str = ""
+    api_key: str = ""
+    harness_url: str = ""
+
+
 # --- App factory ---
 
 def create_app(engine=None) -> FastAPI:
@@ -83,7 +103,7 @@ def create_app(engine=None) -> FastAPI:
     app = FastAPI(
         title="swarma",
         description="Learning agent swarms API",
-        version="0.1.0",
+        version="0.2.0",
     )
 
     app.add_middleware(
@@ -158,6 +178,149 @@ def create_app(engine=None) -> FastAPI:
             },
             "tools": team.tools,
         }
+
+    # --- Team Generator ---
+
+    @app.post("/teams/generate")
+    async def generate_team(req: TeamGenerateRequest):
+        eng = _engine()
+        from ..core.generator import generate_team as _generate
+
+        instance_path = Path(eng.state.db_path).parent
+        try:
+            result = await _generate(
+                intent=req.intent,
+                router=eng.router,
+                instance_path=instance_path,
+                context=req.context,
+                name=req.name,
+                budget=req.budget,
+                schedule=req.schedule,
+            )
+
+            # Reload the new team into the engine and create a runner
+            from ..core.config import TeamConfig
+            from ..core.cycle import CycleRunner
+            new_team = TeamConfig.from_directory(result["team_dir"])
+            eng.teams[new_team.id] = new_team
+            eng._runners[new_team.id] = CycleRunner(
+                team=new_team,
+                router=eng.router,
+                state=eng.state,
+                knowledge=eng.knowledge,
+                tool_registry=eng.tool_registry,
+                adapter_registry=eng.adapter_registry,
+                expert_catalog=eng.expert_catalog,
+            )
+
+            return result
+        except FileExistsError as e:
+            raise HTTPException(409, str(e))
+        except Exception as e:
+            logger.error("team generation failed: %s", e)
+            raise HTTPException(500, f"Generation failed: {e}")
+
+    # --- Setup wizard deploy ---
+
+    @app.post("/setup/deploy")
+    async def setup_deploy(req: SetupDeployRequest):
+        """Deploy a new team from the setup wizard."""
+        import yaml as _yaml
+
+        eng = _engine()
+        instance_dir = Path(eng.state.db_path).parent
+        teams_dir = instance_dir / "teams"
+        team_dir = teams_dir / req.name
+
+        if team_dir.exists():
+            raise HTTPException(409, f"Team '{req.name}' already exists")
+
+        try:
+            team_dir.mkdir(parents=True, exist_ok=True)
+            agents_dir = team_dir / "agents"
+            agents_dir.mkdir(exist_ok=True)
+
+            # Build flow from agents if not provided
+            flow = req.flow
+            if not flow and req.agents:
+                flow = " -> ".join(a["id"] for a in req.agents)
+
+            # Write team.yaml
+            team_config = {
+                "name": req.name,
+                "goal": req.goal,
+                "flow": flow,
+            }
+            with open(team_dir / "team.yaml", "w") as f:
+                _yaml.dump(team_config, f, default_flow_style=False, sort_keys=False)
+
+            # Write agent yamls
+            for agent in req.agents:
+                agent_config = {
+                    "name": agent["id"],
+                    "model": {
+                        "model_id": agent.get("model", "mistralai/mistral-nemo"),
+                        "max_tokens": 1000,
+                        "temperature": 0.5,
+                    },
+                    "instructions": f"You are the {agent['id']} agent for the {req.name} swarm.",
+                }
+                with open(agents_dir / f"{agent['id']}.yaml", "w") as f:
+                    _yaml.dump(agent_config, f, default_flow_style=False, sort_keys=False)
+
+            # Write API key to .env if provided
+            if req.api_key and req.api_key != "sk-or-v1-YOUR_KEY":
+                env_path = instance_dir / ".env"
+                env_content = ""
+                if env_path.exists():
+                    env_content = env_path.read_text()
+                if "OPENROUTER_API_KEY" not in env_content:
+                    with open(env_path, "a") as f:
+                        f.write(f"\nOPENROUTER_API_KEY={req.api_key}\n")
+
+            # Reload team into engine
+            from ..core.config import TeamConfig
+            from ..core.cycle import CycleRunner
+            new_team = TeamConfig.from_directory(str(team_dir))
+            eng.teams[new_team.id] = new_team
+            eng._runners[new_team.id] = CycleRunner(
+                team=new_team,
+                router=eng.router,
+                state=eng.state,
+                knowledge=eng.knowledge,
+                tool_registry=eng.tool_registry,
+                adapter_registry=eng.adapter_registry,
+                expert_catalog=eng.expert_catalog,
+            )
+
+            # Create initial experiment if hypothesis provided
+            exp_id = None
+            if req.hypothesis:
+                first_agent = req.agents[0]["id"] if req.agents else "default"
+                exp_id = eng.state.create_experiment(
+                    team_id=req.name,
+                    agent_id=first_agent,
+                    hypothesis=req.hypothesis,
+                    metric_name="engagement_rate",
+                    sample_size=5,
+                )
+
+            return {
+                "status": "deployed",
+                "team_id": req.name,
+                "agents": [a["id"] for a in req.agents],
+                "flow": flow,
+                "experiment_id": exp_id,
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error("setup/deploy failed: %s", e, exc_info=True)
+            # Clean up partially created team dir
+            import shutil
+            if team_dir.exists():
+                shutil.rmtree(team_dir, ignore_errors=True)
+            raise HTTPException(500, f"Deploy failed: {e}")
 
     # --- Agents ---
 
@@ -410,10 +573,12 @@ def create_app(engine=None) -> FastAPI:
             # Alias DB column names to what the dashboard expects
             d["current_sample"] = d.get("sample_size_current", 0)
             d["sample_size"] = d.get("sample_size_needed", 5)
-            # Compute improvement percentage
-            if d.get("baseline") and d.get("result"):
+            # Compute improvement percentage (guard against zero baseline)
+            baseline = d.get("baseline")
+            result = d.get("result")
+            if baseline and baseline != 0 and result is not None:
                 d["improvement_pct"] = round(
-                    (d["result"] - d["baseline"]) / d["baseline"] * 100, 1
+                    (result - baseline) / baseline * 100, 1
                 )
             else:
                 d["improvement_pct"] = None
@@ -457,7 +622,7 @@ def create_app(engine=None) -> FastAPI:
         eng.state.close_experiment(exp_id, req.result, req.verdict, req.strategy_change)
         return {"id": exp_id, "verdict": req.verdict}
 
-    # --- Playbook (validated patterns from strategy files) ---
+    # --- Playbook (validated patterns from strategy files + knowledge store) ---
 
     @app.get("/playbook")
     async def get_playbook(team_id: Optional[str] = None):
@@ -481,14 +646,47 @@ def create_app(engine=None) -> FastAPI:
                 "baseline": d["baseline"],
                 "improvement": (
                     round((d["result"] - d["baseline"]) / d["baseline"] * 100, 1)
-                    if d["baseline"] and d["result"] else None
+                    if d["baseline"] and d["baseline"] != 0 and d["result"] is not None else None
                 ),
                 "agent_id": d["agent_id"],
                 "team_id": d["team_id"],
                 "closed_at": d["closed_at"],
                 "strategy_change": d["strategy_change"],
+                "verdict": "keep",
             })
+
+        # Also include anti-patterns (discarded experiments)
+        discard_rows = eng.state.conn.execute(
+            "SELECT * FROM experiments WHERE verdict = 'discard' ORDER BY closed_at DESC",
+        ).fetchall()
+        for r in discard_rows:
+            d = dict(r)
+            if team_id and d["team_id"] != team_id:
+                continue
+            patterns.append({
+                "id": d["id"],
+                "hypothesis": d["hypothesis"],
+                "metric": d["metric_name"],
+                "result": d["result"],
+                "baseline": d["baseline"],
+                "improvement": None,
+                "agent_id": d["agent_id"],
+                "team_id": d["team_id"],
+                "closed_at": d["closed_at"],
+                "strategy_change": d["strategy_change"],
+                "verdict": "discard",
+            })
+
         return {"patterns": patterns, "count": len(patterns)}
+
+    @app.get("/playbook/search")
+    async def search_playbook(q: str, limit: int = 10):
+        """Semantic search across cross-team playbook patterns via QMD."""
+        eng = _engine()
+        if not eng.knowledge:
+            raise HTTPException(503, "Knowledge store not available")
+        results = await eng.knowledge.qmd_query(q, collection="playbook", limit=limit)
+        return {"query": q, "results": results, "count": len(results)}
 
     # --- Activity log ---
 

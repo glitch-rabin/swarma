@@ -1,10 +1,14 @@
 ---
 name: swarma
-description: Experiment loop for AI agent teams -- run cycles, check experiments, read the evolving playbook
-version: 0.1.0
+description: Growth experiment loop for AI agent teams -- generate teams from goals, run experiments, build validated playbooks. Use when you want agent swarms that learn and improve through A/B testing.
+version: 0.2.0
+author: swarma
+license: MIT
+compatibility: Requires Python 3.11+, pip, terminal access
 metadata:
+  repository: https://github.com/glitch-rabin/swarma
   hermes:
-    tags: [experiments, learning, growth, agents, teams]
+    tags: [experiments, learning, growth, agents, teams, pirate-funnels]
     category: productivity
     requires_toolsets: [terminal]
     required_environment_variables:
@@ -14,58 +18,37 @@ metadata:
         required_for: running agent cycles
 ---
 
-# swarma -- experiment loop for agent teams
+# swarma -- growth experiment loop for agent teams
 
 ## When to Use
 
-- User wants agent teams that improve over time, not just execute once
-- User needs to run growth experiments, content testing, or research workflows
-- User wants experiment results and strategy evolution tracked outside your context
+- User wants to run growth experiments (hooks, landing pages, outreach, pricing, activation)
+- User wants agent teams that improve over time through A/B testing, not just execute once
+- User says something like "test what works", "optimize my funnel", "find the best hooks"
+- User needs a validated playbook of what actually works for their specific audience/product
 
 ## What It Does
 
-swarma gives you a dedicated experiment loop. each agent gets one metric, one strategy file, and a feedback cycle:
+swarma gives you a dedicated experiment loop. describe a goal, it generates a team, seeds it with real growth knowledge, and runs:
 
 ```
 strategy.md → execute → measure → verdict → updated strategy.md
 ```
 
-Results live in swarma (SQLite + markdown files), not in your memory. Query what teams learned via MCP tools without polluting your context window.
+Results live in swarma (SQLite + markdown files), not in your memory. The playbook grows automatically. You just set direction and review what worked.
 
 ## Onboarding Flow
 
-When a user asks you to set up swarma, interview them first. Don't jump straight to install.
+When a user wants to set up swarma, the fastest path is the team generator. Don't make them configure agents manually.
 
 ### Step 1: Understand the goal
 
 Ask:
-- "What do you want to experiment on?" (content hooks, outreach sequences, ad copy, research, pricing, etc.)
-- "What does success look like?" (more engagement, higher conversion, better quality scores, etc.)
+- "What do you want to improve?" (conversion, engagement, outreach response rate, SEO rankings, etc.)
+- "Who is your audience?" (B2B SaaS users, crypto community, enterprise buyers, etc.)
+- "What does success look like?" (more signups, higher CTR, better reply rates, etc.)
 
-### Step 2: Understand the setup
-
-Ask:
-- "Do you have an OpenRouter API key?" (required -- get one at https://openrouter.ai/keys)
-- "Do you have a model preference?" (swarma works with any model via OpenRouter -- cheap models work fine for experimentation)
-- "Where should this run?" (laptop, VPS, server -- swarma is lightweight, no GPU needed)
-
-### Step 3: Pick a starting squad
-
-Based on their goal, suggest one of the 10 example squads:
-- **hook-lab** -- testing content hooks (3 agents: researcher, copywriter, judge)
-- **channel-mix** -- multi-platform content (4 agents: strategist + 3 writers)
-- **cold-outbound** -- outreach optimization (3 agents: researcher, copywriter, personalization)
-- **seo-engine** -- search optimization (3 agents: keyword researcher, writer, auditor)
-- **activation-flow** -- user onboarding (3 agents: researcher, sequence designer, evaluator)
-- **pricing-lab** -- pricing experiments (3 agents: researcher, analyst, page writer)
-- **landing-lab** -- landing page copy (3 agents: researcher, copywriter, critic)
-- **retention-squad** -- churn prevention (3 agents: signal monitor, analyst, outreach writer)
-- **referral-engine** -- referral loop design (3 agents: analyst, loop designer, outreach writer)
-- **competitive-intel** -- market monitoring (3 agents: scanner, analyst, briefer)
-
-Or start with the built-in **starter** team (thinker -> writer) to verify the install works.
-
-### Step 4: Install and configure
+### Step 2: Install and configure
 
 ```bash
 git clone https://github.com/glitch-rabin/swarma.git
@@ -78,20 +61,39 @@ Add the OpenRouter API key:
 echo "OPENROUTER_API_KEY=sk-or-..." >> ~/.swarma/instances/default/.env
 ```
 
-Verify it works:
+### Step 3: Generate the team from the goal
+
+This is the key step. Use the team generator instead of picking templates.
+
 ```bash
-swarma cycle starter
+swarma team create growth-lab \
+  --from-goal "optimize landing page conversion for our B2B SaaS" \
+  --context "developer tools company, 500 free users, 2% conversion to paid" \
+  --budget 30
 ```
 
-If the user chose a squad, copy it in:
+The generator:
+1. Designs the team (2-5 agents with specific roles)
+2. Picks the cheapest models that fit each role
+3. Writes agent instructions and experiment patterns
+4. Creates a first experiment hypothesis ready to run
+
+Review what it generated:
 ```bash
-cp -r examples/hook-lab ~/.swarma/instances/default/teams/
-swarma cycle hook-lab
+swarma team show growth-lab
 ```
 
-### Step 5: Connect as MCP server
+### Step 4: Run the first cycle
 
-Add swarma to your MCP config so you can run cycles and query results without leaving your context:
+```bash
+swarma cycle growth-lab
+```
+
+This runs the full pipeline: agents execute in flow order, outputs get scored, experiments track progress.
+
+### Step 5: Connect as MCP server (optional)
+
+So you can run cycles and query results without leaving your context:
 
 **Hermes** (`config.yaml`):
 ```yaml
@@ -122,7 +124,7 @@ mcp_servers:
 swarma serve --port 8282    # OpenAPI docs at /docs
 ```
 
-**Important**: when running as an MCP subprocess, `OPENROUTER_API_KEY` must be passed in the `env` block of your MCP config. The instance `.env` file is not inherited by subprocesses.
+**Important**: when running as an MCP subprocess, `OPENROUTER_API_KEY` must be passed in the `env` block. The instance `.env` file is not inherited by subprocesses.
 
 ## Available MCP Tools
 
@@ -142,50 +144,41 @@ Once connected, you get these tools:
 
 ## Typical Workflow
 
-Once swarma is running and connected:
+Once swarma is running:
 
-1. **Set direction**: "run the hook-lab team and test contrarian vs data-led hooks"
-2. **Check progress**: `get_status` or `list_experiments` to see what's running
-3. **Read learnings**: `get_playbook` to see validated patterns across all teams
-4. **Approve plans**: review and approve/reject proposed experiments
+1. **Generate a team**: "create a team to test which hook angles work best for developer audiences"
+2. **Run cycles**: `run_cycle` with the team name, or set up a cron schedule
+3. **Feed real metrics**: `swarma metric log hook-lab copywriter 4.2 --metric ctr_pct`
+4. **Read the playbook**: `get_playbook` to see what the experiments have validated
+5. **Iterate**: refine the goal, adjust constraints, generate new teams for different funnel stages
 
-## Key Concept
+## Key Concepts
 
-You are the executive. swarma is the department. You set goals and review results. The department runs experiments and evolves its own strategies. The messy work (500 hook variations, inconclusive experiments, strategy rewrites) stays in swarma. You just see what worked.
+**The loop is the product.** Every cycle, agents read their strategy, produce output, get scored, and the strategy evolves. After enough cycles, you have a validated playbook.
 
-## Knowledge Layer (QMD)
+**Agents start with real knowledge.** Strategy files are pre-seeded with validated growth patterns. The experiment loop refines these -- it doesn't start from scratch.
 
-swarma includes a knowledge layer powered by [QMD](https://github.com/glitch-rabin/qmd) -- a search engine that indexes agent outputs for cross-team retrieval. BM25 + vector + rerank. no GPU required.
+**You are the executive.** Set goals, review playbooks, approve experiments. The swarm handles the messy work.
 
-### setup
+**External metrics close the gap.** LLM self-eval is a proxy. For production, feed back real signals via `swarma metric log`, CSV import, or webhooks.
 
-```bash
-pip install qmd
-qmd init
-qmd serve                    # runs on http://localhost:8181
-```
+## AARRR Funnel Coverage
 
-### connect to swarma
-
-in the instance `config.yaml`, set the knowledge engine:
-
-```yaml
-knowledge:
-  engine: qmd
-  qmd_endpoint: http://localhost:8181/mcp
-```
-
-once connected, every agent output gets indexed automatically. agents can search what other agents learned -- the experiment loop gets a shared memory layer across teams.
-
-without QMD, swarma falls back to local SQLite search (metadata only, no semantic search). with QMD, you get full-text + vector search across all agent outputs, strategies, and experiment results.
+| Stage | Squad | What it experiments on |
+|-------|-------|----------------------|
+| Acquisition | hook-lab, landing-lab, seo-engine, cold-outbound | hooks, landing pages, search, outreach |
+| Activation | activation-flow | onboarding, time-to-value, empty states |
+| Revenue | pricing-lab | pricing presentation, packaging, anchoring |
+| Retention | retention-squad | churn signals, win-back, engagement |
+| Referral | referral-engine | viral loops, incentives, invite mechanics |
 
 ## Pitfalls
 
-- `OPENROUTER_API_KEY` must be in the MCP `env` config when running as a subprocess (not just in the instance `.env`)
-- First run creates the SQLite database -- subsequent queries require at least one completed cycle
-- Strategy files only start evolving after `min_sample_size` experiments (default: 3-5)
-- Self-eval is the default measurement -- good for prototyping, wire in real signals for production
-- QMD needs to be running (`qmd serve`) before starting swarma if you want semantic search
+- `OPENROUTER_API_KEY` must be in the MCP `env` config when running as a subprocess
+- First run creates the SQLite database -- queries need at least one completed cycle
+- Strategy files evolve after `min_sample_size` experiments (default: 3-5)
+- Self-eval is the starting measurement -- feed real metrics for production decisions
+- QMD needs to be running (`qmd serve`) before starting swarma for cross-team knowledge
 
 ## Verification
 

@@ -51,8 +51,12 @@ def _load_catalog(instance: str):
 
     # Fall back to well-known locations
     import os
+    from pathlib import Path as _Path
+    pkg_root = str(_Path(__file__).resolve().parent.parent.parent)
     search_paths = [
         os.path.expanduser("~/.swarma/experts"),
+        os.path.join(pkg_root, "references", "43-experts"),
+        os.path.join(pkg_root, "experts"),
         os.path.join(os.getcwd(), "references", "43-experts"),
         os.path.join(os.getcwd(), "experts"),
     ]

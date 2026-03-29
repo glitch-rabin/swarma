@@ -17,6 +17,8 @@ import asyncio
 import json
 import logging
 import os
+import shlex
+import shutil
 from typing import Optional
 
 from .base import AdapterCapabilities, AdapterResult, RuntimeAdapter
@@ -51,8 +53,9 @@ class ProcessAdapter(RuntimeAdapter):
         brief_json = json.dumps(brief)
 
         try:
-            proc = await asyncio.create_subprocess_shell(
-                self.command,
+            args = shlex.split(self.command)
+            proc = await asyncio.create_subprocess_exec(
+                *args,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -104,12 +107,6 @@ class ProcessAdapter(RuntimeAdapter):
         """Check if the command exists."""
         try:
             cmd = self.command.split()[0]
-            proc = await asyncio.create_subprocess_shell(
-                f"which {cmd}",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            await proc.communicate()
-            return proc.returncode == 0
+            return shutil.which(cmd) is not None
         except Exception:
             return False

@@ -21,6 +21,7 @@ from .status import status_command
 from .expert import expert_app
 from .team import team_app
 from .tool import tool_app
+from .metric import metric_app
 
 app = typer.Typer(
     name="swarma",
@@ -37,6 +38,7 @@ app.command("status")(status_command)
 app.add_typer(team_app, name="team")
 app.add_typer(tool_app, name="tool")
 app.add_typer(expert_app, name="expert")
+app.add_typer(metric_app, name="metric")
 
 
 if __name__ == "__main__":

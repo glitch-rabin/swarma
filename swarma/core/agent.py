@@ -479,6 +479,46 @@ class Agent:
                         title=f"Experiment {exp['id']} {verdict}",
                     )
 
+                    # Cross-team learning: save validated patterns to playbook
+                    # so ALL teams can search and benefit from this experiment
+                    if verdict == "keep":
+                        improvement = ((avg - (exp['baseline'] or 1)) / max(exp['baseline'] or 1, 0.01)) * 100
+                        self.knowledge.save(
+                            collection="playbook",
+                            content=(
+                                f"# [KEEP] {exp['hypothesis']}\n\n"
+                                f"**Source:** {self.team_id}/{self.agent_id} (Experiment {exp['id']})\n"
+                                f"**Metric:** {exp['metric_name']}\n"
+                                f"**Baseline:** {exp['baseline']:.1f} → **Result:** {avg:.1f} "
+                                f"({improvement:+.0f}%)\n"
+                                f"**Samples:** {new_count}\n"
+                                f"**Confidence:** {'high' if new_count >= 5 else 'medium'}\n\n"
+                                f"## Pattern\n{strategy_change}\n"
+                            ),
+                            agent_id=self.agent_id,
+                            team_id=self.team_id,
+                            title=f"playbook-{exp['metric_name']}-exp{exp['id']}",
+                            metadata={"verdict": "keep", "improvement_pct": round(improvement, 1)},
+                        )
+                        logger.info("playbook: saved validated pattern from exp %d to cross-team knowledge", exp["id"])
+                    elif verdict == "discard":
+                        self.knowledge.save(
+                            collection="playbook",
+                            content=(
+                                f"# [DISCARD] {exp['hypothesis']}\n\n"
+                                f"**Source:** {self.team_id}/{self.agent_id} (Experiment {exp['id']})\n"
+                                f"**Metric:** {exp['metric_name']}\n"
+                                f"**Baseline:** {exp['baseline']:.1f} → **Result:** {avg:.1f}\n"
+                                f"**Samples:** {new_count}\n\n"
+                                f"## Anti-pattern\nThis approach underperformed. Avoid: {exp['hypothesis']}\n"
+                            ),
+                            agent_id=self.agent_id,
+                            team_id=self.team_id,
+                            title=f"playbook-antipattern-exp{exp['id']}",
+                            metadata={"verdict": "discard"},
+                        )
+                        logger.info("playbook: saved anti-pattern from exp %d to cross-team knowledge", exp["id"])
+
                 return {"verdict": verdict, "score": avg, "experiment_id": exp["id"]}
 
             return {"score": score, "samples": new_count, "needed": exp["sample_size_needed"]}

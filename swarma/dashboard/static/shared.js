@@ -176,6 +176,11 @@ function showToast(message, duration) {
 
 // ---- Formatting helpers ----
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function formatCost(cost) {
   return '$' + (cost || 0).toFixed(4);
 }

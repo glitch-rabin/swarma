@@ -1,0 +1,6 @@
+name: Newsletter Engine
+goal: build and monetize a newsletter -- optimize for revenue per subscriber through systematic testing of content, growth, and monetization levers.
+flow: "curator -> writer -> growth-hacker"
+schedule: "0 6 * * 1-5"   # weekdays 6am
+budget_monthly: 20.0
+tools: []

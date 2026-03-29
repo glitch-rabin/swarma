@@ -5,6 +5,7 @@ a starter team directory.
 """
 
 import os
+import shutil
 from pathlib import Path
 
 import typer
@@ -14,6 +15,23 @@ from rich.panel import Panel
 
 from .helpers import get_instance_path
 
+
+def _get_examples_dir() -> Path:
+    """Return the path to bundled example squad templates."""
+    import swarma
+    return Path(swarma.__file__).parent / "examples"
+
+
+def _list_available_templates() -> list[str]:
+    """Return sorted list of available template names."""
+    examples_dir = _get_examples_dir()
+    if not examples_dir.is_dir():
+        return []
+    return sorted(
+        d.name for d in examples_dir.iterdir()
+        if d.is_dir() and not d.name.startswith("_")
+    )
+
 console = Console()
 
 
@@ -21,8 +39,31 @@ def init_command(
     name: str = typer.Option("default", help="Instance name"),
     api_key: str = typer.Option("", help="OpenRouter API key (or set later in .env)"),
     non_interactive: bool = typer.Option(False, "--yes", "-y", help="Skip prompts, use defaults"),
+    template: str = typer.Option(None, "--template", "-t", help="Copy a pre-built squad template into teams/"),
+    list_templates: bool = typer.Option(False, "--list-templates", help="List available squad templates and exit"),
 ):
     """Initialize a new swarma instance."""
+    # Handle --list-templates
+    if list_templates:
+        templates = _list_available_templates()
+        if not templates:
+            console.print("[yellow]No templates found.[/yellow]")
+        else:
+            console.print("[bold]Available squad templates:[/bold]")
+            for t in templates:
+                console.print(f"  {t}")
+        raise typer.Exit(0)
+
+    # Validate --template if provided
+    if template:
+        available = _list_available_templates()
+        if template not in available:
+            console.print(f"[red]Unknown template:[/red] {template}")
+            console.print("[bold]Available templates:[/bold]")
+            for t in available:
+                console.print(f"  {t}")
+            raise typer.Exit(1)
+
     instance_path = get_instance_path(name)
 
     if instance_path.exists():
@@ -104,9 +145,17 @@ def init_command(
     if not gitignore.exists():
         gitignore.write_text(".env\nstate.db\nknowledge/\nlogs/\n")
 
-    # Create a starter team if none exist
-    starter_team = instance_path / "teams" / "starter"
-    if not any((instance_path / "teams").iterdir()):
+    # Copy template squad if requested (skip starter team if template provided)
+    if template:
+        src = _get_examples_dir() / template
+        dst = instance_path / "teams" / template
+        if dst.exists():
+            shutil.rmtree(dst)
+        shutil.copytree(src, dst)
+        console.print(f"Copied squad template '{template}' to teams/")
+    elif not any((instance_path / "teams").iterdir()):
+        # Create a starter team only if no template and no existing teams
+        starter_team = instance_path / "teams" / "starter"
         _create_starter_team(starter_team)
 
     # Done
@@ -121,7 +170,9 @@ def init_command(
     if not api_key:
         console.print("[yellow]Next:[/yellow] Add your OpenRouter API key to .env")
     else:
-        console.print("[yellow]Next:[/yellow] Run [bold]swarma cycle starter[/bold] to test")
+        console.print('[yellow]Next:[/yellow] Run [bold]swarma cycle starter --topic "why do startups fail?"[/bold]')
+    console.print()
+    console.print('Try a pre-built squad:  [bold]swarma init --template hook-lab[/bold]')
 
 
 def _create_starter_team(team_path: Path):

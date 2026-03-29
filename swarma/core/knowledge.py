@@ -187,6 +187,23 @@ title: {title or f'{agent_id} output'}
             return filepath.read_text()
         return None
 
+    def get_playbook(self, team_id: Optional[str] = None, limit: int = 50) -> list[dict]:
+        """Get validated playbook patterns, optionally filtered by team.
+
+        Returns patterns from the 'playbook' collection with full content.
+        Cross-team by default (no team filter).
+        """
+        entries = self.state.search_artifacts(
+            collection="playbook", team_id=team_id, limit=limit,
+        )
+        results = []
+        for entry in entries:
+            content = self.read("playbook", entry.get("filename", ""))
+            if content:
+                entry["content"] = content
+            results.append(entry)
+        return results
+
     def get_agent_context(self, agent_id: str, team_id: str) -> str:
         """Build context string from recent artifacts relevant to an agent."""
         parts = []
@@ -206,5 +223,24 @@ title: {title or f'{agent_id} output'}
             for d in agent_output:
                 title = d.get("title") or d.get("filename", "untitled")
                 parts.append(f"- [{d.get('created_at', '')[:10]}] {title}")
+
+        # Cross-team playbook: validated patterns from ALL teams
+        playbook = self.get_recent("playbook", limit=10)
+        if playbook:
+            parts.append("\n### Cross-Team Playbook (validated patterns)")
+            for p in playbook:
+                title = p.get("title") or p.get("filename", "untitled")
+                source_team = p.get("team_id", "unknown")
+                dt = p.get("created_at", "")[:10]
+                # Read the actual content for the pattern
+                content = self.read("playbook", p.get("filename", ""))
+                if content:
+                    # Extract the first heading line as the pattern summary
+                    for line in content.split("\n"):
+                        if line.startswith("# "):
+                            parts.append(f"- [{dt}] ({source_team}) {line[2:]}")
+                            break
+                else:
+                    parts.append(f"- [{dt}] ({source_team}) {title}")
 
         return "\n".join(parts) if parts else "No prior context available."

@@ -112,9 +112,71 @@ def team_create(
     template: str = typer.Option("", help="Template to use (see 'swarma team templates')"),
     goal: str = typer.Option("", help="Team goal"),
     flow: str = typer.Option("", help="Flow definition (e.g. 'a -> b -> c')"),
+    from_goal: str = typer.Option("", "--from-goal", help="Generate team from a goal using AI (e.g. 'improve LinkedIn engagement')"),
+    context: str = typer.Option("", help="Business context for --from-goal (who you are, what you do)"),
+    budget: float = typer.Option(30.0, help="Monthly budget for --from-goal generation"),
 ):
     """Create a new team."""
     instance_path = require_instance(instance)
+
+    # AI-generated team from goal description
+    if from_goal:
+        import asyncio
+        from .helpers import load_env, build_engine
+
+        load_env(instance_path)
+
+        console.print(f"[bold]Generating team from goal:[/bold] {from_goal}")
+        console.print("[dim]This calls an LLM to design your team...[/dim]")
+
+        # We need a router for the LLM call. Build a minimal one.
+        import os
+        from ..core.router import ModelRouter
+
+        api_key = os.environ.get("OPENROUTER_API_KEY")
+        if not api_key:
+            console.print("[red]No OPENROUTER_API_KEY found. Set it in your instance .env file.[/red]")
+            raise typer.Exit(1)
+
+        router = ModelRouter(api_key=api_key, app_name="swarma")
+
+        from ..core.generator import generate_team
+
+        try:
+            result = asyncio.run(generate_team(
+                intent=from_goal,
+                router=router,
+                instance_path=instance_path,
+                context=context,
+                name=name,
+                budget=budget,
+            ))
+        except FileExistsError:
+            console.print(f"[red]Team '{name}' already exists.[/red]")
+            raise typer.Exit(1)
+        except Exception as e:
+            console.print(f"[red]Generation failed:[/red] {e}")
+            raise typer.Exit(1)
+
+        console.print(f"\n[green]Team generated:[/green] {result['team_dir']}")
+        console.print(f"  name: {result['display_name']}")
+        console.print(f"  goal: {result['goal']}")
+        console.print(f"  flow: {result['flow']}")
+        console.print(f"  agents: {result['agents']}")
+
+        if result.get("first_experiment"):
+            exp = result["first_experiment"]
+            console.print(f"\n[bold]First experiment:[/bold]")
+            console.print(f"  hypothesis: {exp.get('hypothesis', '(none)')}")
+            console.print(f"  metric: {exp.get('metric_name', '(none)')}")
+
+        if result.get("issues"):
+            console.print(f"\n[yellow]Warnings:[/yellow] {result['issues']}")
+
+        console.print(f"\n[yellow]Next:[/yellow] Review configs in {result['team_dir']}/")
+        console.print(f"Then run: [bold]swarma cycle {result['team_name']}[/bold]")
+        return
+
     team_dir = instance_path / "teams" / name
 
     if team_dir.exists():
