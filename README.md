@@ -35,21 +35,25 @@ one folder = one team. one cycle = one experiment. the playbook writes itself.
 
 ## quickstart
 
-### Hermes
-
-```bash
-hermes skills install swarma
-```
-
-then tell Hermes: *"create a team to test what hooks work for developer audiences"*
-
-### Claude Code
-
 ```bash
 pip install swarma
+swarma init
+swarma cycle starter --topic "why do startups fail?"
 ```
 
-add to your MCP config (`.mcp.json`):
+three commands. python 3.11+ and an [OpenRouter](https://openrouter.ai/) API key. no GPU, no postgres, no docker.
+
+or from source:
+
+```bash
+git clone https://github.com/glitch-rabin/swarma.git
+cd swarma && pip install -e .
+```
+
+### MCP integration (Claude Code / Claude Desktop)
+
+after installing, add to your MCP config (`.mcp.json`):
+
 ```json
 {
   "mcpServers": {
@@ -61,16 +65,6 @@ add to your MCP config (`.mcp.json`):
   }
 }
 ```
-
-### CLI
-
-```bash
-pip install swarma
-swarma init
-swarma cycle starter --topic "why do startups fail?"
-```
-
-three commands. python 3.11+ and an [OpenRouter](https://openrouter.ai/) API key. no GPU, no postgres, no docker.
 
 ## the GROWS loop
 
@@ -292,32 +286,11 @@ each includes a `program.md` with experiment patterns and a `strategy.md` with r
 
 swarma is the engine. connect it to an operator for the full experience.
 
-### Hermes (the full stack)
+### Hermes
 
-[Hermes](https://github.com/nousresearch/hermes-agent) by NousResearch is swarma's native operator layer. when connected via MCP, you get:
-
-- **Telegram/Slack control** -- tell Hermes "run the hook lab on AI agents" from your phone
-- **approval flows** -- experiments that need sign-off surface through Hermes
-- **scheduled cycles** -- Hermes triggers swarma on cron, you review results over coffee
-- **cross-session memory** -- Hermes remembers operator context, swarma remembers experiment data
+[Hermes](https://github.com/nousresearch/hermes-agent) by NousResearch is the operator layer swarma is designed for. Hermes has terminal access -- it can run `swarma cycle`, `swarma team create`, and read results directly. no MCP required.
 
 swarma is the machine. Hermes is the executive. together they're the system from [the original article](https://x.com/glitch_).
-
-### Claude Code / Claude Desktop
-
-`pip install swarma`, then add to your MCP config:
-
-```json
-{
-  "mcpServers": {
-    "swarma": {
-      "command": "swarma",
-      "args": ["serve", "--mcp"],
-      "env": { "OPENROUTER_API_KEY": "sk-or-..." }
-    }
-  }
-}
-```
 
 ### QMD cross-team knowledge
 
