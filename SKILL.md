@@ -1,14 +1,16 @@
 ---
 name: swarma
-description: Growth experiment loop for AI agent teams. Generate teams from goals, run GROWS experiments, build validated playbooks. Agents that learn and improve through A/B testing, not just execute once.
+description: "Agent teams that run growth experiments and build their own playbook. GROWS loop: generate hypothesis, run experiment, observe signal, weigh verdict, stack playbook. 18 pre-built squads covering the full AARRR funnel. Your agents stop guessing and start learning."
 version: 0.2.0
 license: MIT
 compatibility: Python 3.11+, pip, terminal access
 metadata:
   repository: https://github.com/glitch-rabin/swarma
   website: https://swarma.dev
+  hook: "a swarm runs 50 experiments while a human team runs 2"
+  keywords: [growth experiments, A/B testing, agent teams, swarm intelligence, AARRR funnel, playbook, learning agents, experiment loop, strategy evolution, self-improving]
   hermes:
-    tags: [experiments, learning, growth, agents, teams, swarms, pirate-funnels, AARRR, playbook]
+    tags: [experiments, learning, growth, agents, teams, swarms, pirate-funnels, AARRR, playbook, self-improving, A/B-testing]
     category: productivity
     requires_toolsets: [terminal]
     required_environment_variables:
