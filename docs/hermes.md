@@ -94,7 +94,7 @@ This gives you:
 
 ## Available MCP Tools
 
-The MCP server exposes 24 tools. Here are the key ones grouped by function:
+The MCP server exposes 16 tools. Here are the key ones grouped by function:
 
 ### Engine Control
 

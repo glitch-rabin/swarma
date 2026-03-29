@@ -2,10 +2,6 @@
 
 growth loops, automated.
 
-**[swarma.dev](https://swarma.dev)**
-
-[English](README.md) | [中文](README.zh.md) | [日本語](README.ja.md)
-
 ---
 
 <p align="center">
@@ -82,7 +78,7 @@ every cycle follows GROWS -- five steps, no exceptions:
 | **G -- Generate** | Agent reads its `strategy.md`, proposes a hypothesis. "contrarian opening lines will outperform data-led hooks on saves." |
 | **R -- Run** | Agent executes with the hypothesis active. Produces output -- research, copy, analysis, whatever the team does. |
 | **O -- Observe** | A separate LLM scores the output against the agent's target metric (1-10 scale, forced decimals). Score + reasoning logged to `results.tsv`. |
-| **W -- Weigh** | After `min_sample_size` cycles (default 3-5), swarma compares experiment average against baseline. >20% up = **keep**. >20% down = **discard**. In between = **inconclusive**. |
+| **W -- Weigh** | After `min_sample_size` cycles (default 5), swarma compares experiment average against baseline. >20% up = **keep**. >20% down = **discard**. In between = **inconclusive**. |
 | **S -- Stack** | Validated patterns get written back to `strategy.md` and pushed to the shared playbook. Next cycle generates a new hypothesis from the evolved strategy. |
 
 this is the same loop every growth team at Uber, Spotify, and Airbnb runs. swarma removes the human bandwidth bottleneck. a swarm runs 50 experiments while a human team runs 2.
@@ -92,10 +88,10 @@ this is the same loop every growth team at Uber, Spotify, and Airbnb runs. swarm
 | | Without | With swarma |
 |---|---------|------------|
 | **Experiments per week** | 2-5 (limited by human bandwidth) | 50+ (limited by API budget) |
-| **Knowledge sharing** | Lives in Slack threads, dies there | Every result indexed, searchable, permanent |
+| **Knowledge sharing** | Lives in Slack threads, dies there | Every result logged to `results.tsv`, strategies evolve per team |
 | **Strategy evolution** | Manual review meetings, quarterly | Automatic after every experiment cycle |
 | **Learning from failure** | "We tried that, it didn't work" (no record) | Logged, analyzed, anti-patterns tracked |
-| **Cross-team learning** | Team A doesn't know what Team B learned | Shared playbook, every team sees every validated pattern |
+| **Cross-team learning** | Team A doesn't know what Team B learned | Optional shared playbook via QMD (cross-team knowledge) |
 | **Starting point** | Blank page or generic templates | Pre-seeded strategies from real growth knowledge |
 
 ## generate a team from a goal
@@ -159,7 +155,7 @@ experiment_config:
   auto_propose: true
 ```
 
-models, tools, and expert lenses are configured in `config.yaml`. agents inherit defaults or override per-agent.
+models are configured per-agent in their YAML files. `swarma init` creates a `config.yaml` at `~/.swarma/instances/default/` with model routing defaults.
 
 flow DSL supports sequential (`a -> b`), parallel (`a -> [b, c, d]`), and mixed pipelines.
 
@@ -169,7 +165,7 @@ flow DSL supports sequential (`a -> b`), parallel (`a -> [b, c, d]`), and mixed 
 2. produces output (research, copy, analysis -- whatever the team does)
 3. a cheap LLM scores the output against the agent's metric (1-10 scale, forced decimals)
 4. score + reasoning logged to `results.tsv`
-5. after `min_sample_size` cycles (default 3-5), verdict is issued automatically
+5. after `min_sample_size` cycles (default 5), verdict is issued automatically
 6. `strategy.md` updated with what was learned
 7. next cycle uses the evolved strategy
 
@@ -323,7 +319,7 @@ no. QMD adds cross-team knowledge sharing. without it, each team learns individu
 
 **what models does it use?**
 
-any model on [OpenRouter](https://openrouter.ai/). swarma routes each task to the best-fit model. you configure the routing table in `config.yaml` and can override per-agent.
+any model on [OpenRouter](https://openrouter.ai/). swarma uses a routing table that maps task types (generation, evaluation, routing) to models. you configure this in the instance `config.yaml` created by `swarma init`, and can override per-agent.
 
 **is this like CrewAI / AutoGen / LangGraph?**
 
@@ -355,7 +351,7 @@ swarma exists because of three ideas from three people:
 - [x] pre-seeded strategy files with real growth knowledge
 - [x] external metric ingestion (`swarma metric log/import/show`)
 - [x] QMD cross-team wiring (verdict -> playbook -> shared knowledge)
-- [x] MCP server (24 tools) for Hermes / Claude Code / any client
+- [x] MCP server (16 tools) for Hermes / Claude Code / any client
 - [x] `pip install swarma` on PyPI (v0.2.0)
 
 **next:**

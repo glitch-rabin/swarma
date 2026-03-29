@@ -35,7 +35,7 @@ if you see agent outputs and costs, you're good.
 swarma/
 ├── core/           # GROWS loop engine -- cycle runner, experiments, verdicts, state
 ├── cli/            # command-line interface (Typer) -- all `swarma *` commands
-├── server/         # FastAPI app (30+ endpoints) + MCP server (24 tools)
+├── server/         # FastAPI app (30+ endpoints) + MCP server (16 tools)
 ├── adapters/       # LLM, HTTP, subprocess, Hermes plugin interfaces
 ├── flow/           # flow DSL parser + executor (sequential, parallel, mixed)
 ├── tools/          # tool registry + definitions for agents
