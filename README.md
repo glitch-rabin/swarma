@@ -381,20 +381,19 @@ swarma exists because of three ideas from three people:
 - [x] 18 squad templates covering full AARRR funnel + 2026 growth ops
 - [x] pre-seeded strategy files with real growth knowledge
 - [x] external metric ingestion (`swarma metric log/import/show`)
-- [x] expert reasoning lenses (34 composable thinking frameworks)
-- [x] dashboard UI (experiment viewer, playbook, strategy evolution)
 - [x] QMD cross-team wiring (verdict -> playbook -> shared knowledge)
-- [x] MCP server (16 tools) for Hermes / Claude Code / any client
+- [x] MCP server (24 tools) for Hermes / Claude Code / any client
 - [x] `pip install swarma` on PyPI (v0.2.0)
 
 **next:**
 
+- [ ] dashboard UI (experiment viewer, playbook, strategy evolution)
 - [ ] setup wizard (guided onboarding for first-time users)
-- [ ] Hermes skill submission (install swarma from the Hermes skills hub)
+- [ ] expert reasoning lenses (bundled thinking frameworks)
+- [ ] Hermes skill package
 - [ ] squad marketplace (share and discover validated teams + playbooks)
 - [ ] webhook metric ingestion (real-time analytics callbacks)
 - [ ] observation-mode experiments (real-world signal primary, LLM eval secondary)
-- [ ] HuggingFace dataset seeding for squad knowledge
 
 ## contributing
 
