@@ -148,19 +148,11 @@ swarma status
 
 Shows all teams, recent runs, costs (today + this month), pending plans, and queue stats.
 
-## Start the Dashboard
+## Start the API Server
 
 ```bash
 swarma serve --port 8282
 ```
-
-Open `http://localhost:8282/dashboard` in your browser. The dashboard shows:
-
-- Team overview and agent status
-- Experiment progress and verdicts
-- Playbook of validated patterns
-- Cost tracking
-- Activity feed
 
 API docs at `http://localhost:8282/docs`.
 

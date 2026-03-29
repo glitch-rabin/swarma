@@ -119,7 +119,7 @@ mcp_servers:
 }
 ```
 
-**REST API** (for dashboards or custom integrations):
+**REST API** (for custom integrations):
 ```bash
 swarma serve --port 8282    # OpenAPI docs at /docs
 ```

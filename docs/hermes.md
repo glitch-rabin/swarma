@@ -89,12 +89,12 @@ swarma serve --port 8282 --mcp --http 8383
 ```
 
 This gives you:
-- REST API on `:8282` (dashboard, webhooks, external integrations)
+- REST API on `:8282` (webhooks, external integrations)
 - MCP server on `:8383` (Hermes, Claude, other MCP clients)
 
 ## Available MCP Tools
 
-The MCP server exposes 16 tools. Here are the key ones grouped by function:
+The MCP server exposes 24 tools. Here are the key ones grouped by function:
 
 ### Engine Control
 

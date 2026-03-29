@@ -458,11 +458,11 @@ curl "http://localhost:8282/activity?limit=20"
 
 ---
 
-### Setup Wizard
+### Team Deployment
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/setup/deploy` | Deploy a new team from the setup wizard UI. Creates team dir, agents, optional first experiment. |
+| POST | `/setup/deploy` | Deploy a new team. Creates team dir, agents, optional first experiment. |
 
 ```bash
 curl -X POST http://localhost:8282/setup/deploy \
@@ -478,21 +478,3 @@ curl -X POST http://localhost:8282/setup/deploy \
     "hypothesis": "data-led hooks outperform story-led for B2B"
   }'
 ```
-
----
-
-### Dashboard Pages
-
-These serve the static dashboard HTML. Not API endpoints -- browser navigation.
-
-| Path | Page |
-|------|------|
-| `/dashboard` | Main dashboard |
-| `/setup` | Setup wizard |
-| `/experiments-view` | Experiments list |
-| `/playbook-view` | Playbook viewer |
-| `/agents-view` | Agents overview |
-| `/agent/{team_id}/{agent_id}` | Agent detail page |
-| `/flow-view` | Flow visualization |
-| `/knowledge-view` | Knowledge store browser |
-| `/settings-view` | Settings |

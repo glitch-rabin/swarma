@@ -35,13 +35,12 @@ if you see agent outputs and costs, you're good.
 swarma/
 ├── core/           # GROWS loop engine -- cycle runner, experiments, verdicts, state
 ├── cli/            # command-line interface (Typer) -- all `swarma *` commands
-├── server/         # FastAPI app (30+ endpoints) + MCP server (16 tools)
+├── server/         # FastAPI app (30+ endpoints) + MCP server (24 tools)
 ├── adapters/       # LLM, HTTP, subprocess, Hermes plugin interfaces
 ├── flow/           # flow DSL parser + executor (sequential, parallel, mixed)
 ├── tools/          # tool registry + definitions for agents
-├── experts/        # 34 composable reasoning frameworks ("lenses")
+├── experts/        # expert reasoning lens infrastructure
 ├── templates/      # jinja2 prompt templates
-├── dashboard/      # pre-built React/Vite UI (static assets)
 └── examples/       # bundled squad templates (18 squads)
 
 examples/           # squad templates (also bundled into package)
@@ -79,7 +78,7 @@ docs/               # quickstart, API reference, hermes integration, squad docs
 
 - new experiment strategies
 - alternative model routers
-- dashboard improvements
+- dashboard UI
 
 check the [roadmap in README.md](README.md#roadmap) for what's planned.
 
